@@ -1,0 +1,97 @@
+<?php
+
+namespace CarterZenk\JsonApi\Hydrator;
+
+use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
+use WoohooLabs\Yin\JsonApi\Hydrator\AbstractHydrator;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
+
+class Hydrator extends AbstractHydrator implements HydratorInterface
+{
+    /**
+     * @var ModelHydrator
+     */
+    private $modelHydrator;
+
+    /**
+     * Hydrator constructor.
+     */
+    public function __construct()
+    {
+        $this->modelHydrator = new ModelHydrator();
+    }
+
+    /**
+     * @param string $clientGeneratedId
+     * @param RequestInterface $request
+     * @param ExceptionFactoryInterface $exceptionFactory
+     * @throws \Exception
+     */
+    protected function validateClientGeneratedId(
+        $clientGeneratedId,
+        RequestInterface $request,
+        ExceptionFactoryInterface $exceptionFactory
+    ) {
+        if ($clientGeneratedId !== null) {
+            throw $exceptionFactory->createClientGeneratedIdNotSupportedException($request, $clientGeneratedId);
+        }
+    }
+
+    /**
+     * @return string
+     */
+    protected function generateId()
+    {
+        return uniqid();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getAcceptedType()
+    {
+        return '';
+    }
+
+    /**
+     * @param array $data
+     * @param ExceptionFactoryInterface $exceptionFactory
+     * @throws \Exception
+     */
+    protected function validateType($data, ExceptionFactoryInterface $exceptionFactory)
+    {
+        $acceptedType = $this->getAcceptedType();
+
+        if (empty($data["type"])) {
+            throw $exceptionFactory->createResourceTypeMissingException();
+        }
+    }
+
+    /**
+     * @param mixed $domainObject
+     * @param string $id
+     * @return mixed|null
+     */
+    protected function setId($domainObject, $id)
+    {
+        return $this->modelHydrator->setId($domainObject, $id);
+    }
+
+    /**
+     * @param mixed $domainObject
+     * @return \callable[]
+     */
+    protected function getRelationshipHydrator($domainObject)
+    {
+        return $this->modelHydrator->getRelationshipHydrator($domainObject);
+    }
+
+    /**
+     * @param mixed $domainObject
+     * @return \callable[]
+     */
+    protected function getAttributeHydrator($domainObject)
+    {
+        return $this->modelHydrator->getAttributeHydrator($domainObject);
+    }
+}

@@ -1,0 +1,57 @@
+{
+  "name": "carterzenk/slim-jsonapi",
+  "description": "JSON API (jsonapi.org) implementation for Eloquent models and Slim framework.",
+  "keywords": [
+    "jsonapi.org",
+    "json-api",
+    "jsonapi",
+    "neomerx",
+    "json",
+    "api",
+    "illuminate",
+    "eloquent",
+    "carterzenk"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Carter Zenk",
+      "email": "carter@totalexpertinc.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.5.0",
+    "psr/http-message": "^1.0",
+    "psr/log": "^1.0",
+    "woohoolabs/yin": "^1.0",
+    "slim/slim": "^3.0",
+    "illuminate/database": "^5.3",
+    "illuminate/pagination": "^5.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^4.6 || ^5.0",
+    "mockery/mockery": "~0.9.4",
+    "scrutinizer/ocular": "^1.3",
+    "squizlabs/php_codesniffer": "^2.5",
+    "monolog/monolog": "^1.18",
+    "there4/slim-test-helpers": "^2.1.1",
+    "fzaninotto/faker": "^1.6.0",
+    "illuminate/filesystem": "^5.3"
+  },
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "CarterZenk\\JsonApi\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "CarterZenk\\Tests\\JsonApi\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": ["@phpunit", "@phpcs"],
+    "phpunit": "./vendor/phpunit/phpunit/phpunit",
+    "phpcs": "./vendor/bin/phpcs -p -s --standard=PSR2 ./src ./tests"
+  }
+}

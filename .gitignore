@@ -1,0 +1,14 @@
+composer.phar
+coverage/
+build/
+vendor/
+*.iws
+/out/
+.idea/
+.idea_modules/
+atlassian-ide-plugin.xml
+composer.lock
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
