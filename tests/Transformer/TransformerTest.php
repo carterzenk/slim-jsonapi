@@ -8,6 +8,7 @@ use CarterZenk\Tests\JsonApi\BaseTestCase;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 use CarterZenk\Tests\JsonApi\Model\Organization;
 use CarterZenk\Tests\JsonApi\Model\OrganizationUser;
+use TypeError;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Links;
@@ -137,7 +138,7 @@ class TransformerTest extends BaseTestCase
     public function testExceptionWithInvalidType()
     {
         $transformer = $this->getTransformer();
-        $this->expectException(\TypeError::class);
+        $this->expectException(TypeError::class);
         $transformer->getRelationships([]);
     }
 }
