@@ -4,7 +4,7 @@ namespace CarterZenk\JsonApi\Transformer;
 
 use WoohooLabs\Yin\JsonApi\Transformer\AbstractResourceTransformer;
 
-class Transformer extends AbstractResourceTransformer
+class Transformer extends AbstractResourceTransformer implements ResourceTransformerInterface
 {
     use LinksTrait;
 
@@ -53,7 +53,6 @@ class Transformer extends AbstractResourceTransformer
      */
     public function getMeta($domainObject)
     {
-        // TODO: Figure out how to deal with meta.
         return [];
     }
 
@@ -87,6 +86,6 @@ class Transformer extends AbstractResourceTransformer
      */
     public function getRelationships($domainObject)
     {
-        return $this->modelTransformer->getRelationships($domainObject, $this);
+        return $this->modelTransformer->getRelationships($domainObject, $this, $this->baseUri);
     }
 }

@@ -32,10 +32,6 @@ class User extends BaseModel
         'ownedContacts'
     ];
 
-    protected $defaultIncludedRelationships = [
-        'ownedContacts'
-    ];
-
 
     protected $visibleRelationships = [
         'ownedContacts',

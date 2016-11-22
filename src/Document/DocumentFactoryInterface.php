@@ -2,23 +2,19 @@
 
 namespace CarterZenk\JsonApi\Document;
 
-use Psr\Http\Message\ServerRequestInterface;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
-/**
- * Interface DocumentFactoryInterface
- * @package CarterZenk\JsonApi\Document
- */
 interface DocumentFactoryInterface
 {
     /**
-     * @param ServerRequestInterface $request
+     * @param RequestInterface $request
      * @return SingleResourceDocument
      */
-    public function createResourceDocument(ServerRequestInterface $request);
+    public function createResourceDocument(RequestInterface $request);
 
     /**
-     * @param ServerRequestInterface $request
+     * @param RequestInterface $request
      * @return CollectionResourceDocument
      */
-    public function createCollectionDocument(ServerRequestInterface $request);
+    public function createCollectionDocument(RequestInterface $request);
 }

@@ -12,34 +12,6 @@ use WoohooLabs\Yin\JsonApi\Request\Request;
 
 class ControllerTest extends BaseTestCase
 {
-    private function getRequest()
-    {
-        return $this->app->request;
-    }
-
-    private function getResponse()
-    {
-        return $this->app->response;
-    }
-
-    private function getJsonApi()
-    {
-        $serializer = new Serializer(JSON_PRETTY_PRINT);
-        $exceptionFactory = new DefaultExceptionFactory();
-
-        $request = new Request($this->getRequest(), $exceptionFactory);
-        $response = $this->getResponse();
-
-        return new JsonApi($request, $response, $exceptionFactory, $serializer);
-    }
-
-    private function getContactsController()
-    {
-        return $this->app->getContainer()->get(
-            '\CarterZenk\Tests\JsonApi\Controller\ContactsController'
-        );
-    }
-
     public function testClassesExist()
     {
         $this->assertEquals(true, class_exists(JsonApi::class));

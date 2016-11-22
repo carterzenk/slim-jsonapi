@@ -2,223 +2,191 @@
 
 namespace CarterZenk\JsonApi\Controller;
 
-use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
+use CarterZenk\JsonApi\Encoder\EncoderInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
-use WoohooLabs\Yin\JsonApi\Exception\ResourceNotFound;
-use WoohooLabs\Yin\JsonApi\JsonApi;
-use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 abstract class JsonApiController
 {
     use JsonApiTrait;
 
     /**
-     * @var DocumentFactoryInterface
+     *
      */
-    protected $documentFactory;
+    const OK = 200;
+    /**
+     *
+     */
+    const CREATED = 201;
+    /**
+     *
+     */
+    const ACCEPTED = 202;
+    /**
+     *
+     */
+    const NO_CONTENT = 204;
 
     /**
-     * @var ExceptionFactoryInterface
+     * @var EncoderInterface
      */
-    protected $exceptionFactory;
+    protected $encoder;
 
     /**
-     * @var SerializerInterface
-     */
-    protected $serializer;
-
-    /**
-     * @var ResourceTransformerInterface
-     */
-    protected $transformer;
-
-    /**
-     * @var HydratorInterface
-     */
-    protected $hydrator;
-
-    /**
-     * @param DocumentFactoryInterface $documentFactory
+     * @param EncoderInterface $encoder
      * @param ExceptionFactoryInterface $exceptionFactory
-     * @param SerializerInterface $serializer
      * @param HydratorInterface $hydrator
      */
     public function __construct(
-        DocumentFactoryInterface $documentFactory,
+        EncoderInterface $encoder,
         ExceptionFactoryInterface $exceptionFactory,
-        SerializerInterface $serializer,
         HydratorInterface $hydrator
     ) {
-        $this->documentFactory = $documentFactory;
+        $this->encoder = $encoder;
         $this->exceptionFactory = $exceptionFactory;
-        $this->serializer = $serializer;
         $this->hydrator = $hydrator;
     }
 
     /**
      * Get many resources.
      *
-     * @param JsonApi $jsonApi
-     * @param array $args
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @return ResponseInterface
      */
-    public function indexResourceAction(JsonApi $jsonApi, array $args)
+    public function indexResourceAction(RequestInterface $request, ResponseInterface $response)
     {
-        $request = $jsonApi->getRequest();
+        $index = $this->indexResourceCallable();
 
-        $pagination = $request->getPageBasedPagination(1, 20);
-        $filters = $request->getFiltering();
-        $sorting = $request->getSorting();
-
-        $index = $this->indexResourceCallable($pagination, $filters, $sorting);
-        $results = $index();
-
-        $document = $this->documentFactory->createCollectionDocument($request);
-
-        return $jsonApi->respond()->ok($document, $results);
+        return $this->respond($index, $request, $response);
     }
 
     /**
      * Get single resource.
      *
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
      * @return ResponseInterface
      * @throws \Exception
      */
-    public function findResourceAction(JsonApi $jsonApi, array $args)
+    public function findResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
         $find = $this->findResourceCallable($args['id']);
-        $results = $find();
 
-        $request = $jsonApi->getRequest();
-
-        if (is_null($results)) {
-            throw $this->exceptionFactory->createResourceNotFoundException($request);
-        }
-
-        $document = $this->documentFactory->createResourceDocument($request);
-        $response = $jsonApi->respond()->ok($document, $results);
-        return $response;
+        return $this->respond($find, $request, $response);
     }
 
     /**
      * Get a relationship on a resource.
      *
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
-     *
      * @return ResponseInterface
      */
-    public function findRelationshipAction(JsonApi $jsonApi, array $args)
+    public function findRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
         $relationshipName = $args['relationship'];
+        $findRelationship = $this->findRelationshipCallable($args['id'], $relationshipName);
 
-        $find = $this->findResourceCallable($id);
-        $result = $find();
-
-        $request = $jsonApi->getRequest();
-        $document = $this->documentFactory->createResourceDocument($request);
-
-        return $jsonApi->respondWithRelationship($relationshipName)->ok($document, $result);
+        return $this->respond(
+            $findRelationship,
+            $request,
+            $response,
+            self::OK,
+            $relationshipName
+        );
     }
 
     /**
      * Create a resource.
      *
-     * @param JsonApi $jsonApi
-     *
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @return ResponseInterface
+     *
      */
-    public function createResourceAction(JsonApi $jsonApi)
+    public function createResourceAction(RequestInterface $request, ResponseInterface $response)
     {
         $create = $this->createResourceCallable();
-        $model = $create();
 
-        $model = $jsonApi->hydrate($this->hydrator, $model);
-        $model->save();
-        $model = $model->fresh();
-
-        $request = $jsonApi->getRequest();
-        $document = $this->documentFactory->createResourceDocument($request);
-
-        return $jsonApi->respond()->created($document, $model);
+        return $this->respond($create, $request, $response, self::CREATED);
     }
 
     /**
      * Update a resource.
      *
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
-     *
      * @return ResponseInterface
      */
-    public function updateResourceAction(JsonApi $jsonApi, array $args)
+    public function updateResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
+        $update = $this->updateResourceCallable($args['id']);
 
-        $find = $this->findResourceCallable($id);
-        $model = $find();
-
-        $model = $jsonApi->hydrate($this->hydrator, $model);
-        $model->save();
-        $model = $model->fresh();
-
-        $request = $jsonApi->getRequest();
-        $document = $this->documentFactory->createResourceDocument($request);
-
-        return $jsonApi->respond()->ok($document, $model);
+        return $this->respond($update, $request, $response, self::ACCEPTED);
     }
 
     /**
      * Update a relationship.
      *
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
-     *
      * @return ResponseInterface
      */
-    public function updateRelationshipAction(JsonApi $jsonApi, array $args)
+    public function updateRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
         $relationshipName = $args['relationship'];
+        $updateRelationship = $this->updateRelationshipCallalbe($args['id'], $relationshipName);
 
-        $find = $this->findResourceCallable($id);
-        $model = $find();
-
-        $model = $jsonApi->hydrateRelationship(
-            $relationshipName,
-            $this->hydrator,
-            $model
-        );
-        $model->save();
-        $model = $model->fresh();
-
-        $request = $jsonApi->getRequest();
-        $document = $this->documentFactory->createResourceDocument($request);
-
-        return $jsonApi->respond()->ok($document, $model);
+        return $this->respond($updateRelationship, $request, $response, self::ACCEPTED, $relationshipName);
     }
 
     /**
      * Delete a resource.
      *
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param array $args
-     *
      * @return ResponseInterface
      */
-    public function deleteResourceAction(JsonApi $jsonApi, array $args)
+    public function deleteResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
+        $delete = $this->deleteResourceCallable($args['id']);
 
-        $delete = $this->deleteResourceCallable($id);
-        $delete();
+        return $this->respond($delete, $request, $response, self::NO_CONTENT);
+    }
 
-        return $jsonApi->respond()->noContent();
+    /**
+     * @param callable $resourceCallable
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param int $statusCode
+     * @param null $relationshipName
+     * @return ResponseInterface
+     */
+    protected function respond(
+        callable $resourceCallable,
+        RequestInterface $request,
+        ResponseInterface $response,
+        $statusCode = self::OK,
+        $relationshipName = null
+    ) {
+        $resource = $resourceCallable($request);
+
+        if (isset($resource)) {
+            if (isset($relationshipName)) {
+                $response = $this->encoder->encodeRelationship($resource, $request, $response, $relationshipName);
+            } else {
+                $response = $this->encoder->encodeResource($resource, $request, $response);
+            }
+        }
+
+        return $response->withStatus($statusCode);
     }
 }

@@ -2,28 +2,12 @@
 
 namespace CarterZenk\JsonApi\Document;
 
-use WoohooLabs\Yin\JsonApi\Document\AbstractCollectionDocument;
+use WoohooLabs\Yin\JsonApi\Schema\Data\CollectionData;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
+use WoohooLabs\Yin\JsonApi\Transformer\Transformation;
 
-class CollectionResourceDocument extends AbstractCollectionDocument
+class CollectionResourceDocument extends AbstractSuccessfulDocument
 {
-    use ResourceDocumentTrait;
-
-    /**
-     * CollectionResourceDocument constructor.
-     * @param ResourceTransformerInterface $transformer
-     * @param string $path
-     * @param string|null $baseUri
-     */
-    public function __construct(ResourceTransformerInterface $transformer, $path, $baseUri = null)
-    {
-        $this->path = $path;
-        $this->baseUri = $baseUri;
-
-        parent::__construct($transformer);
-    }
-
     /**
      * @inheritdoc
      */
@@ -48,5 +32,62 @@ class CollectionResourceDocument extends AbstractCollectionDocument
         $links->setPagination($this->path, $this->domainObject);
 
         return $links;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createData()
+    {
+        return new CollectionData();
+    }
+
+    /**
+     * @return bool
+     */
+    protected function hasItems()
+    {
+        return empty($this->getItems()) === false;
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getItems()
+    {
+        return $this->domainObject;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function fillData(Transformation $transformation)
+    {
+        foreach ($this->getItems() as $item) {
+            $transformation->data->addPrimaryResource($this->transformer->transformToResource($transformation, $item));
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getRelationshipContentInternal(
+        $relationshipName,
+        Transformation $transformation,
+        array $additionalMeta = []
+    ) {
+        if ($this->hasItems() === false) {
+            return [];
+        }
+        $result = [];
+        foreach ($this->getItems() as $item) {
+            $result[] = $this->transformer->transformRelationship(
+                $relationshipName,
+                $transformation,
+                $item,
+                $additionalMeta
+            );
+        }
+        return $result;
     }
 }

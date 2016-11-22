@@ -21,7 +21,7 @@ class ModelHydrator
     public function getRelationshipHydrator(Model $model)
     {
         $relationshipParser = new RelationshipParser($model);
-        return $relationshipParser->getRelationshipHydrator();
+        return $relationshipParser->getRelationshipHydrators();
     }
 
     /**

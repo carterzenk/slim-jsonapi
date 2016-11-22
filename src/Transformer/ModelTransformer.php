@@ -7,7 +7,6 @@ use CarterZenk\JsonApi\Model\RelationshipParser;
 use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Schema\Links;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class ModelTransformer
 {
@@ -75,17 +74,27 @@ class ModelTransformer
      */
     public function getDefaultIncludedRelationships(Model $model)
     {
-        return $model->getDefaultIncludedRelationships();
+        $defaultIncludedRelationships = [];
+
+        foreach ($model->getDefaultIncludedRelationships() as $includedRelationship) {
+            $defaultIncludedRelationships[] = Str::slug(Str::snake(ucwords($includedRelationship)));
+        }
+
+        return $defaultIncludedRelationships;
     }
 
     /**
      * @param Model $model
      * @param ResourceTransformerInterface $transformer
-     * @return callable[]
+     * @param null|string $baseUri
+     * @return \callable[]
      */
-    public function getRelationships(Model $model, ResourceTransformerInterface $transformer)
-    {
-        $relationshipParser = new RelationshipParser($model);
+    public function getRelationships(
+        Model $model,
+        ResourceTransformerInterface $transformer,
+        $baseUri = null
+    ) {
+        $relationshipParser = new RelationshipParser($model, $baseUri);
         return $relationshipParser->getRelationships($transformer);
     }
 }

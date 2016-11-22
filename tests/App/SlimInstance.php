@@ -5,13 +5,16 @@ namespace CarterZenk\Tests\JsonApi\App;
 use CarterZenk\JsonApi\App\App;
 use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
+use CarterZenk\JsonApi\Encoder\EncoderInterface;
+use CarterZenk\JsonApi\Encoder\JsonApiEncoder;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
-use CarterZenk\JsonApi\Handlers\Strategies\InvocationStrategy;
 use CarterZenk\JsonApi\Hydrator\Hydrator;
-use CarterZenk\JsonApi\Serializer\Serializer;
+use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
+use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\Tests\JsonApi\Controller\ContactsController;
 use CarterZenk\Tests\JsonApi\Controller\UsersController;
+use CarterZenk\Tests\JsonApi\Handlers\InvocationStrategy;
 use Illuminate\Filesystem\ClassFinder;
 use Illuminate\Filesystem\Filesystem;
 use Interop\Container\ContainerInterface;
@@ -19,7 +22,6 @@ use Slim\Interfaces\InvocationStrategyInterface;
 use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
-use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class SlimInstance
@@ -78,16 +80,12 @@ class SlimInstance
         };
 
         $container[ErrorHandler::class] = function (ContainerInterface $container) {
-            return new ErrorHandler(
-                $container->get(SerializerInterface::class),
-                true
-            );
+            return new ErrorHandler(true);
         };
 
         $container[InvocationStrategyInterface::class] = function (ContainerInterface $container) {
             return new InvocationStrategy(
-                $container->get(ExceptionFactoryInterface::class),
-                $container->get(SerializerInterface::class)
+                $container->get(ExceptionFactoryInterface::class)
             );
         };
 
@@ -104,8 +102,16 @@ class SlimInstance
         };
 
         $container[SerializerInterface::class] = function (ContainerInterface $container) {
-            return new Serializer(
+            return new JsonApiSerializer(
                 $container->get('settings')['jsonApi']['encoderOptions']
+            );
+        };
+
+        $container[EncoderInterface::class] = function (ContainerInterface $container) {
+            return new JsonApiEncoder(
+                $container->get(SerializerInterface::class),
+                $container->get(DocumentFactoryInterface::class),
+                $container->get(ExceptionFactoryInterface::class)
             );
         };
 
@@ -113,9 +119,8 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new ContactsController(
-                $container->get(DocumentFactoryInterface::class),
+                $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(SerializerInterface::class),
                 $container->get(HydratorInterface::class)
             );
         };
@@ -124,9 +129,8 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new UsersController(
-                $container->get(DocumentFactoryInterface::class),
+                $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(SerializerInterface::class),
                 $container->get(HydratorInterface::class)
             );
         };
@@ -147,6 +151,16 @@ class SlimInstance
         $app->get(
             '/leads/{id}/relationships/{relationship}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:findRelationshipAction'
+        );
+
+        $app->get(
+            '/users/{id}',
+            '\CarterZenk\Tests\JsonApi\Controller\UsersController:findResourceAction'
+        );
+
+        $app->get(
+            '/users/{id}/relationships/{relationship}',
+            '\CarterZenk\Tests\JsonApi\Controller\UsersController:findRelationshipAction'
         );
 
         $app->delete(

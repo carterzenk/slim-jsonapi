@@ -2,11 +2,12 @@
 
 namespace CarterZenk\JsonApi\Handlers;
 
+use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use WoohooLabs\Yin\JsonApi\Exception\ApplicationError;
 use WoohooLabs\Yin\JsonApi\Exception\JsonApiExceptionInterface;
-use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
+use WoohooLabs\Yin\JsonApi\Serializer\DefaultSerializer;
 
 class ErrorHandler
 {
@@ -22,14 +23,11 @@ class ErrorHandler
 
     /**
      * JsonApiExceptionHandler constructor.
-     * @param SerializerInterface $serializer
      * @param bool $displayErrorDetails
      */
-    public function __construct(
-        SerializerInterface $serializer,
-        $displayErrorDetails = false
-    ) {
-        $this->serializer = $serializer;
+    public function __construct($displayErrorDetails = false)
+    {
+        $this->serializer = new DefaultSerializer();
         $this->displayErrorDetails = (bool) $displayErrorDetails;
     }
 

@@ -2,16 +2,15 @@
 
 namespace CarterZenk\Tests\JsonApi;
 
-use CarterZenk\JsonApi\Exceptions\RelationshipExistenceException;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipParser;
 use CarterZenk\JsonApi\Model\RelationshipParserInterface;
 use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\Tests\JsonApi\Model\Comment;
 use CarterZenk\Tests\JsonApi\Model\Contact;
-use CarterZenk\Tests\JsonApi\Model\OrganizationUser;
 use CarterZenk\Tests\JsonApi\Model\Thread;
 use CarterZenk\Tests\JsonApi\Model\User;
+use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 
@@ -52,30 +51,61 @@ class RelationshipParserTest extends BaseTestCase
         $this->assertInstanceOf(\Closure::class, $relationships['organizations']);
     }
 
-    public function testRelationshipClosureReturnsRelationship()
+    public function testToManyRelationship()
     {
         $user = User::find(1);
         $relationships = $this->getRelationships($user);
-        $relationship = $relationships['organizations']($user);
+        $relationship = $relationships['owned-contacts']($user);
 
         $this->assertInstanceOf(ToManyRelationship::class, $relationship);
 
+        $links = $relationship->getLinks();
+
+        $this->assertEquals('http://localhost', $links->getBaseUri());
+
+        $this->assertEquals(
+            '/users/1/relationships/owned-contacts',
+            $links->getSelf()->getHref()
+        );
+
+        $this->assertEquals(
+            '/users/1/owned-contacts',
+            $links->getRelated()->getHref()
+        );
+    }
+
+    public function testToOneRelationship()
+    {
         $contact = Contact::find(1);
         $relationships = $this->getRelationships($contact);
         $relationship = $relationships['owner']($contact);
 
         $this->assertInstanceOf(ToOneRelationship::class, $relationship);
+
+        $links = $relationship->getLinks();
+
+        $this->assertEquals('http://localhost', $links->getBaseUri());
+
+        $this->assertEquals(
+            '/leads/1/relationships/owner',
+            $links->getSelf()->getHref()
+        );
+
+        $this->assertEquals(
+            '/leads/1/owner',
+            $links->getRelated()->getHref()
+        );
     }
 
     public function testMethodNotExistsExceptions()
     {
-        $this->expectException(RelationshipExistenceException::class);
+        $this->expectException(RelationshipNotExists::class);
         $this->getRelationships(new Thread());
     }
 
     public function testMethodReturnsWrongTypeException()
     {
-        $this->expectException(RelationshipExistenceException::class);
+        $this->expectException(RelationshipNotExists::class);
         $this->getRelationships(new Comment());
     }
 }
