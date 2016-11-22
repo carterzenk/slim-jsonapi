@@ -2,12 +2,27 @@
 
 namespace CarterZenk\JsonApi\Exceptions;
 
-class InvalidDomainObjectException extends \Exception
-{
-    public function __construct($domainObject, $code = 0, \Exception $previous = null)
-    {
-        $message = 'Domain object '.get_class($domainObject).' is not a Model or Collection.';
+use WoohooLabs\Yin\JsonApi\Exception\JsonApiException;
+use WoohooLabs\Yin\JsonApi\Schema\Error;
 
-        parent::__construct($message, $code, $previous);
+class InvalidDomainObjectException extends JsonApiException
+{
+    public function __construct($domainObject)
+    {
+        parent::__construct('Domain object '.get_class($domainObject).' is not a Model or Collection.');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getErrors()
+    {
+        return [
+            Error::create()
+                ->setStatus(500)
+                ->setCode("DOMAIN_OBJECT_TYPE_ERROR")
+                ->setTitle("Invalid domain object error")
+                ->setDetail($this->getMessage())
+        ];
     }
 }

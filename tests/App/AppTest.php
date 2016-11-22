@@ -5,8 +5,8 @@ namespace CarterZenk\Tests\JsonApi\App;
 use CarterZenk\JsonApi\App\App;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
-use CarterZenk\Tests\JsonApi\Model\User;
 use WoohooLabs\Yin\JsonApi\Exception\ClientGeneratedIdNotSupported;
+use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 use WoohooLabs\Yin\JsonApi\Exception\ResourceNotFound;
 use WoohooLabs\Yin\JsonApi\Exception\ResourceTypeMissing;
 
@@ -29,6 +29,14 @@ class AppTest extends BaseTestCase
         $this->assertInstanceOf(App::class, $this->app);
     }
 
+    public function testGetResponseAsString()
+    {
+        $this->client->get('/leads/1');
+        $serializer = new JsonApiSerializer(JSON_PRETTY_PRINT);
+        $responseString = $serializer->getBodyAsString($this->client->response);
+        $this->assertTrue(is_string($responseString));
+    }
+
     public function testGetContactSuccess()
     {
         $this->client->get('/leads/1');
@@ -38,6 +46,12 @@ class AppTest extends BaseTestCase
     public function testGetContactRelationshipSuccess()
     {
         $this->client->get('/leads/1/relationships/assignee');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetContactRelationshipWithIncludeSuccess()
+    {
+        $this->client->get('/leads/1/relationships/assignee?include=owned-contacts');
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
@@ -65,7 +79,25 @@ class AppTest extends BaseTestCase
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
-    public function testGetUsersWithOwnedContactsSuccess()
+    public function testGetLeadsPagination()
+    {
+        $this->client->get('/leads?page[size]=3&page[number]=2');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetLeadsIncludeAssignee()
+    {
+        $this->client->get('/leads?include=assignee,assignee');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetLeadsIncludeAssigneeAndOwnedContacts()
+    {
+        $this->client->get('/leads?include=assignee,assignee.owned-contacts');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetUserIncludeOwnedContacts()
     {
         $this->client->get('/users/1?include=owned-contacts');
         $this->assertEquals(200, $this->client->response->getStatusCode());
@@ -77,10 +109,10 @@ class AppTest extends BaseTestCase
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
-    public function testInvalidRelationshipError()
+    public function testGetHasManyRelationshipWithIncludedSuccess()
     {
-        $this->expectException(ResourceNotFound::class);
-        $this->client->get('/users/1/relationships/someinvalidrelationship');
+        $this->client->get('/users/1/relationships/owned-contacts?include=owned-contacts,owned-contacts.assignee');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
     public function testCreateContactsSuccess()
@@ -245,11 +277,20 @@ class AppTest extends BaseTestCase
         $this->client->get('/leads/5948');
     }
 
-    public function testGetResponseAsString()
+    public function testUpdateInvalidRelationshipError()
     {
-        $this->client->get('/leads/1');
-        $serializer = new JsonApiSerializer(JSON_PRETTY_PRINT);
-        $responseString = $serializer->getBodyAsString($this->client->response);
-        $this->assertTrue(is_string($responseString));
+        $this->expectException(RelationshipNotExists::class);
+        $this->client->patch('/leads/1/relationships/some-relationship', [
+            'data' => [
+                'type' => 'user',
+                'id' => '2'
+            ]
+        ]);
+    }
+
+    public function testGetInvalidRelationshipError()
+    {
+        $this->expectException(RelationshipNotExists::class);
+        $this->client->get('/users/1/relationships/someinvalidrelationship');
     }
 }

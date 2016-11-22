@@ -2,14 +2,13 @@
 
 namespace CarterZenk\JsonApi\Model;
 
-use CarterZenk\JsonApi\Exceptions\RelationshipExistenceException;
-use Guzzle\Tests\Service\Description\ParameterTest;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
+use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Hydrator\Relationship\ToOneRelationship as ToOneHydrator;
@@ -46,6 +45,7 @@ class RelationshipParser implements RelationshipParserInterface
     public function __construct(Model $model, $baseUrl = null)
     {
         $this->baseUrl = $baseUrl;
+        $this->loadedRelationships = $model->getRelations();
 
         foreach ($model->getVisibleRelationships() as $name) {
             $this->visibleRelationships[$name] = $this->getRelation($name, $model);
@@ -54,20 +54,18 @@ class RelationshipParser implements RelationshipParserInterface
         foreach ($model->getFillableRelationships() as $name) {
             $this->fillableRelationships[$name] = $this->getRelation($name, $model);
         }
-
-        $this->loadedRelationships = $model->getRelations();
     }
 
     /**
      * @param $name
      * @param Model $model
      * @return mixed
-     * @throws RelationshipExistenceException
+     * @throws RelationshipNotExists
      */
     private function getRelation($name, Model $model)
     {
         if (!method_exists($model, $name)) {
-            throw new RelationshipExistenceException($model, $name);
+            throw new RelationshipNotExists($this->getSlugCase($name));
         }
 
         $relation = $model->$name();
@@ -75,8 +73,13 @@ class RelationshipParser implements RelationshipParserInterface
         if ($relation instanceof Relation) {
             return $relation;
         } else {
-            throw new RelationshipExistenceException($model, $name);
+            throw new RelationshipNotExists($this->getSlugCase($name));
         }
+    }
+
+    private function getSlugCase($name)
+    {
+        return Str::slug(Str::snake(ucwords($name)));
     }
 
     /**
@@ -89,11 +92,11 @@ class RelationshipParser implements RelationshipParserInterface
         $relationships = [];
 
         foreach ($this->visibleRelationships as $name => $relation) {
-            $keyName = Str::slug(Str::snake(ucwords($name)));
+            $keyName = $this->getSlugCase($name);
 
-            if ($relation instanceof HasOne || $relation instanceof BelongsTo) {
+            if ($this->isToOne($relation)) {
                 $relationshipCallable = $this->getToOneRelationshipCallable($name, $keyName, $transformer);
-            } elseif ($relation instanceof HasMany || $relation instanceof BelongsToMany) {
+            } elseif ($this->isToMany($relation)) {
                 $relationshipCallable = $this->getToManyRelationshipCallable($name, $keyName, $transformer);
             }
 
@@ -106,12 +109,30 @@ class RelationshipParser implements RelationshipParserInterface
     }
 
     /**
+     * @param Relation $relation
+     * @return bool
+     */
+    private function isToOne(Relation $relation)
+    {
+        return $relation instanceof HasOne || $relation instanceof BelongsTo;
+    }
+
+    /**
+     * @param Relation $relation
+     * @return bool
+     */
+    private function isToMany(Relation $relation)
+    {
+        return $relation instanceof HasMany || $relation instanceof BelongsToMany;
+    }
+
+    /**
      * @param string $name
      * @param string $keyName
      * @param ResourceTransformerInterface $transformer
      * @return \Closure
      */
-    private function getToOneRelationshipCallable($name, $keyName, ResourceTransformerInterface $transformer)
+    protected function getToOneRelationshipCallable($name, $keyName, ResourceTransformerInterface $transformer)
     {
         // TODO: Implement links.
         return function ($domainObject) use ($name, $keyName, $transformer) {
@@ -129,19 +150,35 @@ class RelationshipParser implements RelationshipParserInterface
      * @param ResourceTransformerInterface $transformer
      * @return \Closure
      */
-    private function getToManyRelationshipCallable($name, $keyName, ResourceTransformerInterface $transformer)
+    protected function getToManyRelationshipCallable($name, $keyName, ResourceTransformerInterface $transformer)
     {
         return function ($domainObject) use ($name, $keyName, $transformer) {
             // TODO: Implement links.
+            $relationship = ToManyRelationship::create();
 
-            $dataCallable = function () use ($domainObject, $name) {
-                return $domainObject->$name;
-            };
+            if ($this->isLoaded($name)) {
+                $data = $domainObject->$name;
+                $relationship->setData($data, $transformer);
+            } else {
+                $dataCallable = function () use ($domainObject, $name) {
+                    return $domainObject->$name;
+                };
 
-            return ToManyRelationship::create()
-                ->setDataAsCallable($dataCallable, $transformer)
-                ->omitWhenNotIncluded();
+                $relationship->setDataAsCallable($dataCallable, $transformer);
+                $relationship->omitWhenNotIncluded();
+            }
+
+            return $relationship;
         };
+    }
+
+    /**
+     * @param $relationship
+     * @return bool
+     */
+    private function isLoaded($relationship)
+    {
+        return array_key_exists($relationship, $this->loadedRelationships);
     }
 
     /**
@@ -152,46 +189,57 @@ class RelationshipParser implements RelationshipParserInterface
         $hydrators = [];
 
         foreach ($this->fillableRelationships as $name => $relation) {
-            if ($relation instanceof HasOne || $relation instanceof BelongsTo) {
-                $hydratorCallable = function (
-                    Model $model,
-                    ToOneHydrator $relationship,
-                    $data,
-                    $relationshipName
-                ) use (
-                    $name,
-                    $relation
-                ) {
-                    $id = $relationship->getResourceIdentifier()->getId();
-                    $relatedModel = $relation->getRelated()->newQuery()->findOrFail($id);
-                    $model->$name()->associate($relatedModel);
-                    return $model;
-                };
-            } elseif ($relation instanceof HasMany || $relation instanceof BelongsToMany) {
-                $hydratorCallable = function (
-                    Model $model,
-                    ToManyHydrator $relationship,
-                    $data,
-                    $relationshipName
-                ) use (
-                    $name,
-                    $relation
-                ) {
-                    $ids = $relationship->getResourceIdentifierIds();
-                    foreach ($ids as $id) {
-                        $relatedModel = $relation->getRelated()->newQuery()->findOrFail($id);
-                        $model->$name()->save($relatedModel);
-                    }
-                    return $model;
-                };
+            if ($this->isToOne($relation)) {
+                $hydratorCallable = $this->getToOneHydratorCallable($name, $relation);
+            } elseif ($this->isToMany($relation)) {
+                $hydratorCallable = $this->getToManyHydratorCallable($name, $relation);
             }
 
             if (isset($hydratorCallable)) {
-                $keyName = Str::slug(Str::snake(ucwords($name)));
+                $keyName = $this->getSlugCase($name);
                 $hydrators[$keyName] = $hydratorCallable;
             }
         }
 
         return $hydrators;
+    }
+
+    protected function getToOneHydratorCallable($name, Relation $relation)
+    {
+        return function (
+            Model $model,
+            ToOneHydrator $relationship,
+            $data,
+            $relationshipName
+        ) use (
+            $name,
+            $relation
+        ) {
+            $id = $relationship->getResourceIdentifier()->getId();
+            $relatedModel = $relation->getRelated()->newQuery()->findOrFail($id);
+            $model->$name()->associate($relatedModel);
+
+            return $model;
+        };
+    }
+
+    protected function getToManyHydratorCallable($name, Relation $relation)
+    {
+        return function (
+            Model $model,
+            ToManyHydrator $relationship,
+            $data,
+            $relationshipName
+        ) use (
+            $name,
+            $relation
+        ) {
+            foreach ($relationship->getResourceIdentifierIds() as $id) {
+                $relatedModel = $relation->getRelated()->newQuery()->findOrFail($id);
+                $model->$name()->save($relatedModel);
+            }
+
+            return $model;
+        };
     }
 }

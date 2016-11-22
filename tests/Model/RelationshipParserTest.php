@@ -12,6 +12,7 @@ use CarterZenk\Tests\JsonApi\Model\Contact;
 use CarterZenk\Tests\JsonApi\Model\OrganizationUser;
 use CarterZenk\Tests\JsonApi\Model\Thread;
 use CarterZenk\Tests\JsonApi\Model\User;
+use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 
@@ -69,13 +70,13 @@ class RelationshipParserTest extends BaseTestCase
 
     public function testMethodNotExistsExceptions()
     {
-        $this->expectException(RelationshipExistenceException::class);
+        $this->expectException(RelationshipNotExists::class);
         $this->getRelationships(new Thread());
     }
 
     public function testMethodReturnsWrongTypeException()
     {
-        $this->expectException(RelationshipExistenceException::class);
+        $this->expectException(RelationshipNotExists::class);
         $this->getRelationships(new Comment());
     }
 }

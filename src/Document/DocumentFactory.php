@@ -44,4 +44,10 @@ class DocumentFactory implements DocumentFactoryInterface
     {
         return new CollectionResourceDocument($this->transformer, $request, $this->jsonApiVersion);
     }
+
+    public function createRelationshipDocument(RequestInterface $request, $relationshipName)
+    {
+        $this->transformer->setForcedInclude($relationshipName);
+        return new SingleResourceDocument($this->transformer, $request, $this->jsonApiVersion);
+    }
 }

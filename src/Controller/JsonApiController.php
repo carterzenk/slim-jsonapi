@@ -52,12 +52,8 @@ abstract class JsonApiController
      */
     public function indexResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $pagination = $request->getPageBasedPagination(1, 20);
-        $filters = $request->getFiltering();
-        $sorting = $request->getSorting();
-
-        $index = $this->indexResourceCallable($pagination, $filters, $sorting);
-        $results = $index();
+        $index = $this->indexResourceCallable();
+        $results = $index($request);
 
         $response = $this->encoder->encodeResource($results, $request, $response);
 
@@ -94,7 +90,6 @@ abstract class JsonApiController
     {
         $id = $args['id'];
         $relationshipName = $args['relationship'];
-
         $find = $this->findRelationshipCallable($id, $relationshipName);
         $result = $find($request);
 

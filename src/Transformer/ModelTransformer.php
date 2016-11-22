@@ -74,7 +74,13 @@ class ModelTransformer
      */
     public function getDefaultIncludedRelationships(Model $model)
     {
-        return $model->getDefaultIncludedRelationships();
+        $defaultIncludedRelationships = [];
+
+        foreach ($model->getDefaultIncludedRelationships() as $includedRelationship) {
+            $defaultIncludedRelationships[] = Str::slug(Str::snake(ucwords($includedRelationship)));
+        }
+
+        return $defaultIncludedRelationships;
     }
 
     /**
@@ -82,9 +88,12 @@ class ModelTransformer
      * @param ResourceTransformerInterface $transformer
      * @return callable[]
      */
-    public function getRelationships(Model $model, ResourceTransformerInterface $transformer)
-    {
-        $relationshipParser = new RelationshipParser($model);
+    public function getRelationships(
+        Model $model,
+        ResourceTransformerInterface $transformer,
+        $baseUri = null
+    ) {
+        $relationshipParser = new RelationshipParser($model, $baseUri);
         return $relationshipParser->getRelationships($transformer);
     }
 }

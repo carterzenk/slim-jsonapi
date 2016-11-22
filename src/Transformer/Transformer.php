@@ -13,6 +13,8 @@ class Transformer extends AbstractResourceTransformer implements ResourceTransfo
      */
     private $modelTransformer;
 
+    private $forcedInclude;
+
     /**
      * Transformer constructor.
      * @param string $baseUri
@@ -29,6 +31,11 @@ class Transformer extends AbstractResourceTransformer implements ResourceTransfo
     public function setBaseUri($baseUri)
     {
         $this->baseUri = $baseUri;
+    }
+
+    public function setForcedInclude($name)
+    {
+        $this->forcedInclude = $name;
     }
 
     /**
@@ -53,7 +60,6 @@ class Transformer extends AbstractResourceTransformer implements ResourceTransfo
      */
     public function getMeta($domainObject)
     {
-        // TODO: Figure out how to deal with meta.
         return [];
     }
 
@@ -87,6 +93,6 @@ class Transformer extends AbstractResourceTransformer implements ResourceTransfo
      */
     public function getRelationships($domainObject)
     {
-        return $this->modelTransformer->getRelationships($domainObject, $this);
+        return $this->modelTransformer->getRelationships($domainObject, $this, $this->baseUri);
     }
 }
