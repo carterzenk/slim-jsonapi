@@ -92,10 +92,11 @@ abstract class JsonApiController
         $relationshipName = $args['relationship'];
         $findRelationship = $this->findRelationshipCallable($args['id'], $relationshipName);
 
-        return $this->respondWithRelationship(
+        return $this->respond(
             $findRelationship,
             $request,
             $response,
+            self::OK,
             $relationshipName
         );
     }
@@ -143,13 +144,7 @@ abstract class JsonApiController
         $relationshipName = $args['relationship'];
         $updateRelationship = $this->updateRelationshipCallalbe($args['id'], $relationshipName);
 
-        return $this->respondWithRelationship(
-            $updateRelationship,
-            $request,
-            $response,
-            $relationshipName,
-            self::ACCEPTED
-        );
+        return $this->respond($updateRelationship, $request, $response, self::ACCEPTED, $relationshipName);
     }
 
     /**
@@ -172,42 +167,24 @@ abstract class JsonApiController
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param int $statusCode
+     * @param null $relationshipName
      * @return ResponseInterface
      */
     protected function respond(
         callable $resourceCallable,
         RequestInterface $request,
         ResponseInterface $response,
-        $statusCode = self::OK
+        $statusCode = self::OK,
+        $relationshipName = null
     ) {
         $resource = $resourceCallable($request);
 
         if (isset($resource)) {
-            $response = $this->encoder->encodeResource($resource, $request, $response);
-        }
-
-        return $response->withStatus($statusCode);
-    }
-
-    /**
-     * @param callable $relationshipCallable
-     * @param RequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $relationshipName
-     * @param int $statusCode
-     * @return ResponseInterface
-     */
-    protected function respondWithRelationship(
-        callable $relationshipCallable,
-        RequestInterface $request,
-        ResponseInterface $response,
-        $relationshipName,
-        $statusCode = self::OK
-    ) {
-        $resource = $relationshipCallable($request);
-
-        if (isset($resource)) {
-            $response = $this->encoder->encodeRelationship($resource, $request, $response, $relationshipName);
+            if (isset($relationshipName)) {
+                $response = $this->encoder->encodeRelationship($resource, $request, $response, $relationshipName);
+            } else {
+                $response = $this->encoder->encodeResource($resource, $request, $response);
+            }
         }
 
         return $response->withStatus($statusCode);
