@@ -3,8 +3,9 @@
 namespace CarterZenk\Tests\JsonApi\App;
 
 use CarterZenk\JsonApi\App\App;
-use CarterZenk\JsonApi\Serializer\Serializer;
+use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
+use CarterZenk\Tests\JsonApi\Model\User;
 use WoohooLabs\Yin\JsonApi\Exception\ClientGeneratedIdNotSupported;
 use WoohooLabs\Yin\JsonApi\Exception\ResourceNotFound;
 use WoohooLabs\Yin\JsonApi\Exception\ResourceTypeMissing;
@@ -56,6 +57,30 @@ class AppTest extends BaseTestCase
     {
         $this->client->get('/leads?sort=f_name');
         $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetUsersSuccess()
+    {
+        $this->client->get('/users/1');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetUsersWithOwnedContactsSuccess()
+    {
+        $this->client->get('/users/1?include=owned-contacts');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testGetHasManyRelationshipSuccess()
+    {
+        $this->client->get('/users/1/relationships/owned-contacts');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
+    public function testInvalidRelationshipError()
+    {
+        $this->expectException(ResourceNotFound::class);
+        $this->client->get('/users/1/relationships/someinvalidrelationship');
     }
 
     public function testCreateContactsSuccess()
@@ -122,7 +147,7 @@ class AppTest extends BaseTestCase
             ]
         ]);
 
-        $this->assertEquals(200, $this->client->response->getStatusCode());
+        $this->assertEquals(202, $this->client->response->getStatusCode());
     }
 
     public function testHydrateToManyRelationship()
@@ -172,7 +197,7 @@ class AppTest extends BaseTestCase
             ]
         ]);
 
-        $this->assertEquals(200, $this->client->response->getStatusCode());
+        $this->assertEquals(202, $this->client->response->getStatusCode());
     }
 
     public function testUpdateRelationshipSuccess()
@@ -184,7 +209,7 @@ class AppTest extends BaseTestCase
             ]
         ]);
 
-        $this->assertEquals(200, $this->client->response->getStatusCode());
+        $this->assertEquals(202, $this->client->response->getStatusCode());
     }
 
     public function testDeleteContactSuccess()
@@ -223,7 +248,7 @@ class AppTest extends BaseTestCase
     public function testGetResponseAsString()
     {
         $this->client->get('/leads/1');
-        $serializer = new Serializer(JSON_PRETTY_PRINT);
+        $serializer = new JsonApiSerializer(JSON_PRETTY_PRINT);
         $responseString = $serializer->getBodyAsString($this->client->response);
         $this->assertTrue(is_string($responseString));
     }

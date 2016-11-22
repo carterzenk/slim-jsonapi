@@ -2,13 +2,27 @@
 
 namespace CarterZenk\JsonApi\Controller;
 
+use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use CarterZenk\JsonApi\Model\Paginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
+use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Request\Pagination\PageBasedPagination;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 trait JsonApiTrait
 {
+    /**
+     * @var HydratorInterface
+     */
+    protected $hydrator;
+
+    /**
+     * @var ExceptionFactoryInterface
+     */
+    protected $exceptionFactory;
+
     /**
      * Returns an Eloquent Query Builder.
      *
@@ -89,61 +103,159 @@ trait JsonApiTrait
     }
 
     /**
-     * @param $id
+     * Finds a resource.
      *
+     * @param $id
      * @return callable
-     * @codeCoverageIgnore
      */
     protected function findResourceCallable($id)
     {
-        return function () use ($id) {
-            return $this->getBuilder()->find($id);
+        return function (RequestInterface $request) use ($id) {
+            $model = $this->getBuilder()->find($id);
+
+            if (is_null($model)) {
+                throw $this->exceptionFactory->createResourceNotFoundException($request);
+            }
+
+            return $model;
         };
     }
 
     /**
+     * Finds a relationship on a resource.
+     *
      * @param int $id
      * @param string $relationship
-     *
      * @return callable
-     * @codeCoverageIgnore
      */
     protected function findRelationshipCallable($id, $relationship)
     {
-        return function () use ($id, $relationship) {
-            $model = $this->getBuilder()->find($id);
+        return function (RequestInterface $request) use ($id, $relationship) {
+            $find = $this->findResourceCallable($id);
+            $model = $find($request);
 
-            // TODO: Implement this function to first check if the relationship exists, and then return results.
+            $this->checkRelationshipExists($model, $relationship, $request);
 
             return $model;
         };
     }
 
     /**
-     * Creates a new instance of the model.
+     * Creates a new instance of the model, hydrates, and saves.
      *
      * @return callable
-     * @codeCoverageIgnore
      */
     protected function createResourceCallable()
     {
-        return function () {
+        return function (RequestInterface $request) {
             $model = $this->getModel()->newInstance();
-            return $model;
+
+            $model = $this->hydrate($model, $request);
+            return $this->saveModel($model);
         };
     }
 
     /**
-     * @param $id
+     * Retrieves the model, hydrates, and saves.
      *
+     * @param string $id
      * @return callable
-     * @codeCoverageIgnore
+     */
+    protected function updateResourceCallable($id)
+    {
+        return function (RequestInterface $request) use ($id) {
+            $find = $this->findResourceCallable($id);
+            $model = $find($request);
+
+            $model = $this->hydrate($model, $request);
+            return $this->saveModel($model);
+        };
+    }
+
+    /**
+     * Retrieves a model, checks relationship, hydrates, and saves.
+     *
+     * @param string $id
+     * @param string $relationship
+     * @return callable
+     */
+    protected function updateRelationshipCallalbe($id, $relationship)
+    {
+        return function (RequestInterface $request) use ($id, $relationship) {
+            $find = $this->findResourceCallable($id);
+            $model = $find($request);
+
+            $this->checkRelationshipExists($model, $relationship, $request);
+
+            $model = $this->hydrateRelationship($model, $relationship, $request);
+            return $this->saveModel($model);
+        };
+    }
+
+    /**
+     * Deletes a model.
+     *
+     * @param $id
+     * @return callable
      */
     protected function deleteResourceCallable($id)
     {
-        return function () use ($id) {
-            $model = $this->getBuilder()->find($id);
+        return function (RequestInterface $request) use ($id) {
+            $find = $this->findResourceCallable($id);
+            $model = $find($request);
+
             return $model->delete();
         };
+    }
+
+    /**
+     * @param $domainObject
+     * @param RequestInterface $request
+     * @return mixed
+     */
+    protected function hydrate($domainObject, RequestInterface $request)
+    {
+        return $this->hydrator->hydrate($request, $this->exceptionFactory, $domainObject);
+    }
+
+    /**
+     * @param $domainObject
+     * @param $relationshipName
+     * @param RequestInterface $request
+     * @return mixed
+     */
+    protected function hydrateRelationship($domainObject, $relationshipName, RequestInterface $request)
+    {
+        return $this->hydrator->hydrateRelationship(
+            $relationshipName,
+            $request,
+            $this->exceptionFactory,
+            $domainObject
+        );
+    }
+
+    /**
+     * @param $domainObject
+     * @param $relationship
+     * @param RequestInterface $request
+     * @throws \Exception
+     */
+    private function checkRelationshipExists($domainObject, $relationship, RequestInterface $request)
+    {
+        $relationshipMethod = Str::camel($relationship);
+
+        if (!method_exists($domainObject, $relationshipMethod)) {
+            throw $this->exceptionFactory->createResourceNotFoundException($request);
+        }
+    }
+
+    /**
+     * @param Model $model
+     * @return Model
+     */
+    private function saveModel(Model $model)
+    {
+        $model->save();
+        return $model->fresh();
     }
 }

@@ -3,8 +3,7 @@
 namespace CarterZenk\Tests\JsonApi\Handlers;
 
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
-use CarterZenk\JsonApi\Handlers\Strategies\InvocationStrategy;
-use CarterZenk\JsonApi\Serializer\Serializer;
+use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Http\Headers;
@@ -23,19 +22,13 @@ class HandlerTest extends BaseTestCase
 
     public function testClassesExist()
     {
-        $this->assertEquals(true, class_exists(InvocationStrategy::class));
         $this->assertEquals(true, class_exists(ErrorHandler::class));
-    }
-
-    public function testInvocationStrategyImplementsInterface()
-    {
-        $invocationStrategy = $this->getInvocationStrategy();
-        $this->assertInstanceOf(InvocationStrategyInterface::class, $invocationStrategy);
     }
 
     public function testErrorHandler()
     {
-        $errorHandler = new ErrorHandler(new Serializer(JSON_PRETTY_PRINT), true);
+        $serializer = new JsonApiSerializer(JSON_PRETTY_PRINT);
+        $errorHandler = new ErrorHandler($serializer, true);
         $exceptionFactory = new DefaultExceptionFactory();
         $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
         $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);

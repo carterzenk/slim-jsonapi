@@ -1,0 +1,115 @@
+<?php
+
+namespace CarterZenk\JsonApi\Encoder;
+
+use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
+use CarterZenk\JsonApi\Model\Model;
+use CarterZenk\JsonApi\Serializer\SerializerInterface;
+use Illuminate\Contracts\Pagination\Paginator;
+use Psr\Http\Message\ResponseInterface;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
+
+abstract class EloquentEncoder implements EncoderInterface
+{
+    protected $serializer;
+
+    public function __construct(SerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function encodeResource(
+        $domainObject,
+        RequestInterface $request,
+        ResponseInterface $response,
+        array $additionalMeta = []
+    ) {
+        if ($this->isModel($domainObject)) {
+            $content = $this->encodeModel($domainObject, $request, $additionalMeta);
+        } elseif ($this->isPaginator($domainObject)) {
+            $content = $this->encodeCollection($domainObject, $request, $additionalMeta);
+        } else {
+            throw new InvalidDomainObjectException($domainObject);
+        }
+
+        return $this->serializer->serialize($response, $content);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function encodeRelationship(
+        $domainObject,
+        RequestInterface $request,
+        ResponseInterface $response,
+        $relationshipName,
+        array $additionalMeta = []
+    ) {
+        if ($this->isModel($domainObject)) {
+            $content = $this->encodeModelRelationship($domainObject, $request, $relationshipName, $additionalMeta);
+        } else {
+            throw new InvalidDomainObjectException($domainObject);
+        }
+
+        return $this->serializer->serialize($response, $content);
+    }
+
+    /**
+     * @param Model $model
+     * @param RequestInterface $request
+     * @param array $additionalMeta
+     * @return string
+     */
+    abstract protected function encodeModel(
+        Model $model,
+        RequestInterface $request,
+        array $additionalMeta
+    );
+
+    /**
+     * @param Paginator $collection
+     * @param RequestInterface $request
+     * @param array $additionalMeta
+     * @return mixed
+     */
+    abstract protected function encodeCollection(
+        Paginator $collection,
+        RequestInterface $request,
+        array $additionalMeta
+    );
+
+    /**
+     * @param Model $model
+     * @param RequestInterface $request
+     * @param $relationshipName
+     * @param array $additionalMeta
+     * @return mixed
+     */
+    abstract protected function encodeModelRelationship(
+        Model $model,
+        RequestInterface $request,
+        $relationshipName,
+        array $additionalMeta
+    );
+
+    /**
+     * @param mixed $domainObject
+     * @return bool
+     */
+    private function isModel($domainObject)
+    {
+        return $domainObject instanceof Model;
+    }
+
+    /**
+     * @param mixed $domainObject
+     * @return bool
+     */
+    private function isPaginator($domainObject)
+    {
+        return $domainObject instanceof Paginator;
+    }
+}

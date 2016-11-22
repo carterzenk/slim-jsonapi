@@ -2,28 +2,12 @@
 
 namespace CarterZenk\JsonApi\Document;
 
-use WoohooLabs\Yin\JsonApi\Document\AbstractSingleResourceDocument;
+use WoohooLabs\Yin\JsonApi\Schema\Data\SingleResourceData;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
+use WoohooLabs\Yin\JsonApi\Transformer\Transformation;
 
-class SingleResourceDocument extends AbstractSingleResourceDocument
+class SingleResourceDocument extends AbstractSuccessfulDocument
 {
-    use ResourceDocumentTrait;
-
-    /**
-     * SingleResourceDocument constructor.
-     * @param ResourceTransformerInterface $transformer
-     * @param string $path
-     * @param string|null $baseUri
-     */
-    public function __construct(ResourceTransformerInterface $transformer, $path, $baseUri = null)
-    {
-        $this->path = $path;
-        $this->baseUri = $baseUri;
-
-        parent::__construct($transformer);
-    }
-
     /**
      * @inheritdoc
      */
@@ -41,5 +25,50 @@ class SingleResourceDocument extends AbstractSingleResourceDocument
         $links->setSelf(new Link($this->path));
 
         return $links;
+    }
+
+    /**
+     * Returns the resource ID for the current domain object.
+     * It is a shortcut of calling the resource transformer's getId() method.
+     *
+     * @return string
+     */
+    public function getResourceId()
+    {
+        return $this->transformer->getId($this->domainObject);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createData()
+    {
+        return new SingleResourceData();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function fillData(Transformation $transformation)
+    {
+        $transformation->data->addPrimaryResource(
+            $this->transformer->transformToResource($transformation, $this->domainObject)
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getRelationshipContentInternal(
+        $relationshipName,
+        Transformation $transformation,
+        array $additionalMeta = []
+    ) {
+        return $this->transformer->transformRelationship(
+            $relationshipName,
+            $transformation,
+            $this->domainObject,
+            $additionalMeta
+        );
     }
 }

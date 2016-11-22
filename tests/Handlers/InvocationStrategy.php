@@ -1,14 +1,12 @@
 <?php
 
-namespace CarterZenk\JsonApi\Handlers\Strategies;
+namespace CarterZenk\Tests\JsonApi\Handlers;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Interfaces\InvocationStrategyInterface;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
-use WoohooLabs\Yin\JsonApi\JsonApi;
 use WoohooLabs\Yin\JsonApi\Request\Request;
-use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
 
 class InvocationStrategy implements InvocationStrategyInterface
 {
@@ -18,21 +16,12 @@ class InvocationStrategy implements InvocationStrategyInterface
     private $exceptionFactory;
 
     /**
-     * @var SerializerInterface
-     */
-    private $serializer;
-
-    /**
      * JsonApiStrategy constructor.
      * @param ExceptionFactoryInterface $exceptionFactory
-     * @param SerializerInterface $serializer
      */
-    public function __construct(
-        ExceptionFactoryInterface $exceptionFactory,
-        SerializerInterface $serializer
-    ) {
+    public function __construct(ExceptionFactoryInterface $exceptionFactory)
+    {
         $this->exceptionFactory = $exceptionFactory;
-        $this->serializer = $serializer;
     }
 
     /**
@@ -49,8 +38,7 @@ class InvocationStrategy implements InvocationStrategyInterface
         array $routeArguments
     ) {
         $request = new Request($request, $this->exceptionFactory);
-        $jsonApi = new JsonApi($request, $response, $this->exceptionFactory, $this->serializer);
 
-        return call_user_func($callable, $jsonApi, $routeArguments);
+        return call_user_func($callable, $request, $response, $routeArguments);
     }
 }

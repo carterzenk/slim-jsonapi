@@ -2,9 +2,9 @@
 
 namespace CarterZenk\JsonApi\Document;
 
+use CarterZenk\JsonApi\Transformer\ResourceTransformerInterface;
 use CarterZenk\JsonApi\Transformer\Transformer;
-use Psr\Http\Message\ServerRequestInterface;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 class DocumentFactory implements DocumentFactoryInterface
 {
@@ -14,64 +14,34 @@ class DocumentFactory implements DocumentFactoryInterface
     private $transformer;
 
     /**
+     * @var string|null
+     */
+    private $jsonApiVersion;
+
+    /**
      * DocumentFactory constructor.
      * @param ResourceTransformerInterface $transformer
+     * @param string|null $jsonApiVersion
      */
-    public function __construct(ResourceTransformerInterface $transformer = null)
+    public function __construct(ResourceTransformerInterface $transformer = null, $jsonApiVersion = null)
     {
         $this->transformer = isset($transformer) ? $transformer : new Transformer();
+        $this->jsonApiVersion = $jsonApiVersion;
     }
 
     /**
      * @inheritdoc
      */
-    public function createResourceDocument(ServerRequestInterface $request)
+    public function createResourceDocument(RequestInterface $request)
     {
-        $path = $this->getPath($request);
-        $baseUri = $this->getBaseUri($request);
-
-        $this->transformer->setBaseUri($baseUri);
-
-        return new SingleResourceDocument($this->transformer, $path, $baseUri);
+        return new SingleResourceDocument($this->transformer, $request, $this->jsonApiVersion);
     }
 
     /**
      * @inheritdoc
      */
-    public function createCollectionDocument(ServerRequestInterface $request)
+    public function createCollectionDocument(RequestInterface $request)
     {
-        $path = $this->getPath($request);
-        $baseUri = $this->getBaseUri($request);
-
-        $this->transformer->setBaseUri($baseUri);
-
-        return new CollectionResourceDocument($this->transformer, $path, $baseUri);
-    }
-
-    /**
-     * @param ServerRequestInterface $request
-     * @return string
-     */
-    private function getBaseUri(ServerRequestInterface $request)
-    {
-        $uri = $request->getUri();
-
-        $baseUrl = $uri->getScheme().'://';
-        $baseUrl .= $uri->getHost();
-
-        if (!empty($uri->getPort())) {
-            $baseUrl .= ':'.$uri->getPort();
-        }
-
-        return $baseUrl;
-    }
-
-    /**
-     * @param ServerRequestInterface $request
-     * @return string
-     */
-    private function getPath(ServerRequestInterface $request)
-    {
-        return $request->getUri()->getPath();
+        return new CollectionResourceDocument($this->transformer, $request, $this->jsonApiVersion);
     }
 }
