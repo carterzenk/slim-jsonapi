@@ -82,7 +82,9 @@ trait JsonApiTrait
         $builder = $this->applySorting($builder, $sorting);
 
         $included = $request->getQueryParam('include', '');
-        $builder = $this->applyIncludes($builder, $included);
+        if (is_string($included)) {
+            $builder = $this->applyIncludes($builder, $included);
+        }
 
         return $builder;
     }
