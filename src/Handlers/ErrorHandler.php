@@ -9,7 +9,6 @@ use WoohooLabs\Yin\JsonApi\Exception\ApplicationError;
 use WoohooLabs\Yin\JsonApi\Exception\JsonApiExceptionInterface;
 use WoohooLabs\Yin\JsonApi\Serializer\DefaultSerializer;
 
-
 class ErrorHandler
 {
     /**

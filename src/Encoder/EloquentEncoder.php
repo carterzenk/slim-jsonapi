@@ -61,7 +61,7 @@ abstract class EloquentEncoder implements EncoderInterface
      * @param Model $model
      * @param RequestInterface $request
      * @param array $additionalMeta
-     * @return string
+     * @return array
      */
     abstract protected function encodeModel(
         Model $model,
@@ -73,7 +73,7 @@ abstract class EloquentEncoder implements EncoderInterface
      * @param Paginator $collection
      * @param RequestInterface $request
      * @param array $additionalMeta
-     * @return mixed
+     * @return array
      */
     abstract protected function encodeCollection(
         Paginator $collection,
@@ -86,7 +86,7 @@ abstract class EloquentEncoder implements EncoderInterface
      * @param RequestInterface $request
      * @param $relationshipName
      * @param array $additionalMeta
-     * @return mixed
+     * @return array
      */
     abstract protected function encodeModelRelationship(
         Model $model,

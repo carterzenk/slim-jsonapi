@@ -232,8 +232,8 @@ trait JsonApiTrait
         return function (RequestInterface $request) use ($id) {
             $find = $this->findResourceCallable($id);
             $model = $find($request);
-
-            return $model->delete();
+            
+            $model->delete();
         };
     }
 

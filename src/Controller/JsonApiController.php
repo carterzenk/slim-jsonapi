@@ -12,9 +12,21 @@ abstract class JsonApiController
 {
     use JsonApiTrait;
 
+    /**
+     *
+     */
     const OK = 200;
+    /**
+     *
+     */
     const CREATED = 201;
+    /**
+     *
+     */
     const ACCEPTED = 202;
+    /**
+     *
+     */
     const NO_CONTENT = 204;
 
     /**
@@ -47,11 +59,8 @@ abstract class JsonApiController
     public function indexResourceAction(RequestInterface $request, ResponseInterface $response)
     {
         $index = $this->indexResourceCallable();
-        $results = $index($request);
 
-        $response = $this->encoder->encodeResource($results, $request, $response);
-
-        return $response->withStatus(self::OK);
+        return $this->respond($index, $request, $response);
     }
 
     /**
@@ -66,10 +75,8 @@ abstract class JsonApiController
     public function findResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
         $find = $this->findResourceCallable($args['id']);
-        $results = $find($request);
-        $response = $this->encoder->encodeResource($results, $request, $response);
 
-        return $response->withStatus(self::OK);
+        return $this->respond($find, $request, $response);
     }
 
     /**
@@ -83,12 +90,14 @@ abstract class JsonApiController
     public function findRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
         $relationshipName = $args['relationship'];
-        $find = $this->findRelationshipCallable($args['id'], $relationshipName);
-        $result = $find($request);
+        $findRelationship = $this->findRelationshipCallable($args['id'], $relationshipName);
 
-        $response = $this->encoder->encodeRelationship($result, $request, $response, $relationshipName);
-
-        return $response->withStatus(self::OK);
+        return $this->respondWithRelationship(
+            $findRelationship,
+            $request,
+            $response,
+            $relationshipName
+        );
     }
 
     /**
@@ -102,11 +111,8 @@ abstract class JsonApiController
     public function createResourceAction(RequestInterface $request, ResponseInterface $response)
     {
         $create = $this->createResourceCallable();
-        $model = $create($request);
 
-        $response = $this->encoder->encodeResource($model, $request, $response);
-
-        return $response->withStatus(self::CREATED);
+        return $this->respond($create, $request, $response, self::CREATED);
     }
 
     /**
@@ -120,11 +126,8 @@ abstract class JsonApiController
     public function updateResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
         $update = $this->updateResourceCallable($args['id']);
-        $model = $update($request);
 
-        $response = $this->encoder->encodeResource($model, $request, $response);
-
-        return $response->withStatus(self::ACCEPTED);
+        return $this->respond($update, $request, $response, self::ACCEPTED);
     }
 
     /**
@@ -139,11 +142,14 @@ abstract class JsonApiController
     {
         $relationshipName = $args['relationship'];
         $updateRelationship = $this->updateRelationshipCallalbe($args['id'], $relationshipName);
-        $model = $updateRelationship($request);
 
-        $response = $this->encoder->encodeRelationship($model, $request, $response, $relationshipName);
-
-        return $response->withStatus(self::ACCEPTED);
+        return $this->respondWithRelationship(
+            $updateRelationship,
+            $request,
+            $response,
+            $relationshipName,
+            self::ACCEPTED
+        );
     }
 
     /**
@@ -157,8 +163,53 @@ abstract class JsonApiController
     public function deleteResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
         $delete = $this->deleteResourceCallable($args['id']);
-        $delete($request);
 
-        return $response->withStatus(self::NO_CONTENT);
+        return $this->respond($delete, $request, $response, self::NO_CONTENT);
+    }
+
+    /**
+     * @param callable $resourceCallable
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param int $statusCode
+     * @return ResponseInterface
+     */
+    protected function respond(
+        callable $resourceCallable,
+        RequestInterface $request,
+        ResponseInterface $response,
+        $statusCode = self::OK
+    ) {
+        $resource = $resourceCallable($request);
+
+        if (isset($resource)) {
+            $response = $this->encoder->encodeResource($resource, $request, $response);
+        }
+
+        return $response->withStatus($statusCode);
+    }
+
+    /**
+     * @param callable $relationshipCallable
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $relationshipName
+     * @param int $statusCode
+     * @return ResponseInterface
+     */
+    protected function respondWithRelationship(
+        callable $relationshipCallable,
+        RequestInterface $request,
+        ResponseInterface $response,
+        $relationshipName,
+        $statusCode = self::OK
+    ) {
+        $resource = $relationshipCallable($request);
+
+        if (isset($resource)) {
+            $response = $this->encoder->encodeRelationship($resource, $request, $response, $relationshipName);
+        }
+
+        return $response->withStatus($statusCode);
     }
 }

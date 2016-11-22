@@ -12,14 +12,14 @@ abstract class AbstractSerializer implements SerializerInterface
      * @param array $content
      * @return string
      */
-    protected abstract function serializeContent(array $content);
+    abstract protected function serializeContent(array $content);
 
     /**
      * This function should return the content type to use.
      *
      * @return string
      */
-    protected abstract function getContentType();
+    abstract protected function getContentType();
 
     /**
      * @param ResponseInterface $response
