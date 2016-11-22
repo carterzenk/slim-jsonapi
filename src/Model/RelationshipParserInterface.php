@@ -11,7 +11,7 @@ interface RelationshipParserInterface
      * be used with the transformer.
      *
      * @param ResourceTransformerInterface $transformer
-     * @return \callable[]
+     * @return callable[]
      */
     public function getRelationships(ResourceTransformerInterface $transformer);
 
@@ -21,5 +21,5 @@ interface RelationshipParserInterface
      *
      * @return callable[]
      */
-    public function getRelationshipHydrator();
+    public function getRelationshipHydrators();
 }

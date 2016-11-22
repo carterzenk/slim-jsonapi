@@ -11,8 +11,15 @@ use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 abstract class EloquentEncoder implements EncoderInterface
 {
+    /**
+     * @var SerializerInterface
+     */
     protected $serializer;
 
+    /**
+     * EloquentEncoder constructor.
+     * @param SerializerInterface $serializer
+     */
     public function __construct(SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
@@ -49,7 +56,12 @@ abstract class EloquentEncoder implements EncoderInterface
         array $additionalMeta = []
     ) {
         if ($this->isModel($domainObject)) {
-            $content = $this->encodeModelRelationship($domainObject, $request, $relationshipName, $additionalMeta);
+            $content = $this->encodeModelRelationship(
+                $domainObject,
+                $request,
+                $relationshipName,
+                $additionalMeta
+            );
         } else {
             throw new InvalidDomainObjectException($domainObject);
         }

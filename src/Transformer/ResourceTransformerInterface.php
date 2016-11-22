@@ -2,7 +2,7 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use \WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface as YinResourceTransformerInterface;
+use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface as YinResourceTransformerInterface;
 
 interface ResourceTransformerInterface extends YinResourceTransformerInterface
 {

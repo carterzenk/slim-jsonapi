@@ -11,12 +11,20 @@ use Slim\App as SlimApp;
 
 class App extends SlimApp
 {
+    /**
+     * App constructor.
+     * @param array|\Interop\Container\ContainerInterface $container
+     */
     public function __construct($container)
     {
         $this->bootEloquent($container);
         parent::__construct($container);
     }
 
+    /**
+     * Sets up the eloquent connection resolver and capsule manager.
+     * @param $container
+     */
     private function bootEloquent($container)
     {
         $connectionSettings = $container['settings']['db'];

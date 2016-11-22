@@ -7,9 +7,29 @@ use WoohooLabs\Yin\JsonApi\Schema\Error;
 
 class InvalidDomainObjectException extends JsonApiException
 {
+    /**
+     * InvalidDomainObjectException constructor.
+     * @param mixed $domainObject
+     */
     public function __construct($domainObject)
     {
-        parent::__construct('Domain object '.get_class($domainObject).' is not a Model or Collection.');
+        $identifier = $this->getIdentifier($domainObject);
+        parent::__construct('Domain object '.$identifier.' is not a Model or Collection.');
+    }
+
+    /**
+     * @param mixed $domainObject
+     * @return string
+     */
+    private function getIdentifier($domainObject)
+    {
+        $type = gettype($domainObject);
+
+        if ($type == 'object') {
+            $type = get_class($domainObject);
+        }
+
+        return $type;
     }
 
     /**
