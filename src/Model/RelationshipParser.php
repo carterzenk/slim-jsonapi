@@ -174,20 +174,12 @@ class RelationshipParser implements RelationshipParserInterface
             $relationship = ToManyRelationship::create();
 
             // Data
-            if ($this->model->relationLoaded($name)) {
-                // If the relation is loaded, set the data directly.
-                $relationship->setData($domainObject->$name, $transformer);
-            } else {
-                // Otherwise, set it as a callable.
-                $dataCallable = function () use ($domainObject, $name) {
-                    return $domainObject->$name;
-                };
-
-                $relationship->setDataAsCallable($dataCallable, $transformer);
-
-                // Only load the relationship if the client requests its inclusion.
-                $relationship->omitWhenNotIncluded();
-            }
+            $relationship = $this->setToManyRelationshipData(
+                $transformer,
+                $relationship,
+                $name,
+                $domainObject
+            );
 
             // Links
             $links = $this->getRelationshipLinks($transformer, $domainObject, $keyName);
@@ -195,6 +187,37 @@ class RelationshipParser implements RelationshipParserInterface
 
             return $relationship;
         };
+    }
+
+    /**
+     * @param ResourceTransformerInterface $transformer
+     * @param ToManyRelationship $relationship
+     * @param string $name
+     * @param mixed $domainObject
+     * @return ToManyRelationship
+     */
+    protected function setToManyRelationshipData(
+        ResourceTransformerInterface $transformer,
+        ToManyRelationship $relationship,
+        $name,
+        $domainObject
+    ) {
+        if ($this->model->relationLoaded($name)) {
+            // If the relation is loaded, set the data directly.
+            $relationship->setData($domainObject->$name, $transformer);
+        } else {
+            // Otherwise, set it as a callable.
+            $dataCallable = function () use ($domainObject, $name) {
+                return $domainObject->$name;
+            };
+
+            $relationship->setDataAsCallable($dataCallable, $transformer);
+
+            // Only load the relationship if the client requests its inclusion.
+            $relationship->omitWhenNotIncluded();
+        }
+
+        return $relationship;
     }
 
     /**

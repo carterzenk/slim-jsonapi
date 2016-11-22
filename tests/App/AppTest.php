@@ -87,7 +87,7 @@ class AppTest extends BaseTestCase
 
     public function testGetLeadsIncludeAssignee()
     {
-        $this->client->get('/leads?include=assignee,assignee');
+        $this->client->get('/leads?include=assignee');
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
