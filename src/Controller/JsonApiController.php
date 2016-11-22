@@ -2,16 +2,11 @@
 
 namespace CarterZenk\JsonApi\Controller;
 
-use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
 use CarterZenk\JsonApi\Encoder\EncoderInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
-use WoohooLabs\Yin\JsonApi\Exception\ResourceNotFound;
-use WoohooLabs\Yin\JsonApi\JsonApi;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
-use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 abstract class JsonApiController
 {
@@ -47,10 +42,9 @@ abstract class JsonApiController
      *
      * @param RequestInterface $request
      * @param ResponseInterface $response
-     * @param array $args
      * @return ResponseInterface
      */
-    public function indexResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
+    public function indexResourceAction(RequestInterface $request, ResponseInterface $response)
     {
         $index = $this->indexResourceCallable();
         $results = $index($request);
@@ -88,9 +82,8 @@ abstract class JsonApiController
      */
     public function findRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
         $relationshipName = $args['relationship'];
-        $find = $this->findRelationshipCallable($id, $relationshipName);
+        $find = $this->findRelationshipCallable($args['id'], $relationshipName);
         $result = $find($request);
 
         $response = $this->encoder->encodeRelationship($result, $request, $response, $relationshipName);
@@ -103,11 +96,10 @@ abstract class JsonApiController
      *
      * @param RequestInterface $request
      * @param ResponseInterface $response
-     * @param array $args
      * @return ResponseInterface
      *
      */
-    public function createResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
+    public function createResourceAction(RequestInterface $request, ResponseInterface $response)
     {
         $create = $this->createResourceCallable();
         $model = $create($request);
@@ -127,9 +119,7 @@ abstract class JsonApiController
      */
     public function updateResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
-
-        $update = $this->updateResourceCallable($id);
+        $update = $this->updateResourceCallable($args['id']);
         $model = $update($request);
 
         $response = $this->encoder->encodeResource($model, $request, $response);
@@ -147,10 +137,8 @@ abstract class JsonApiController
      */
     public function updateRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
         $relationshipName = $args['relationship'];
-
-        $updateRelationship = $this->updateRelationshipCallalbe($id, $relationshipName);
+        $updateRelationship = $this->updateRelationshipCallalbe($args['id'], $relationshipName);
         $model = $updateRelationship($request);
 
         $response = $this->encoder->encodeRelationship($model, $request, $response, $relationshipName);
@@ -168,9 +156,7 @@ abstract class JsonApiController
      */
     public function deleteResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
-        $id = $args['id'];
-
-        $delete = $this->deleteResourceCallable($id);
+        $delete = $this->deleteResourceCallable($args['id']);
         $delete($request);
 
         return $response->withStatus(self::NO_CONTENT);

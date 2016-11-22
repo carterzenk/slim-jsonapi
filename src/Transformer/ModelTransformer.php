@@ -86,7 +86,8 @@ class ModelTransformer
     /**
      * @param Model $model
      * @param ResourceTransformerInterface $transformer
-     * @return callable[]
+     * @param null|string $baseUri
+     * @return \callable[]
      */
     public function getRelationships(
         Model $model,

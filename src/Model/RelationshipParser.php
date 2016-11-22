@@ -208,9 +208,7 @@ class RelationshipParser implements RelationshipParserInterface
     {
         return function (
             Model $model,
-            ToOneHydrator $relationship,
-            $data,
-            $relationshipName
+            ToOneHydrator $relationship
         ) use (
             $name,
             $relation
@@ -227,9 +225,7 @@ class RelationshipParser implements RelationshipParserInterface
     {
         return function (
             Model $model,
-            ToManyHydrator $relationship,
-            $data,
-            $relationshipName
+            ToManyHydrator $relationship
         ) use (
             $name,
             $relation

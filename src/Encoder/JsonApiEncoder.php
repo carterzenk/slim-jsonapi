@@ -69,7 +69,7 @@ class JsonApiEncoder extends EloquentEncoder
         $relationshipName,
         array $additionalMeta
     ) {
-        $document = $this->documentFactory->createRelationshipDocument($request, $relationshipName);
+        $document = $this->documentFactory->createResourceDocument($request);
 
         return $document->getRelationshipContent(
             $this->exceptionFactory,

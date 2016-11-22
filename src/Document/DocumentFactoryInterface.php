@@ -17,6 +17,4 @@ interface DocumentFactoryInterface
      * @return CollectionResourceDocument
      */
     public function createCollectionDocument(RequestInterface $request);
-
-    public function createRelationshipDocument(RequestInterface $request, $relationshipName);
 }
