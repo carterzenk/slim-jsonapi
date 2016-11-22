@@ -44,22 +44,16 @@ trait JsonApiTrait
      * Returns a list of resources based on pagination criteria.
      *
      * @return callable
-     * @codeCoverageIgnore
      */
     protected function indexResourceCallable()
     {
         return function (RequestInterface $request) {
-            $pagination = $request->getPageBasedPagination(1, 20);
-
-
             $builder = $this->getBuilder();
-
-            $builder = $this->applyFilters($builder, $request);
-            $builder = $this->applySorting($builder, $request);
-            $builder = $this->applyIncludes($builder, $request);
+            $builder = $this->applyQueryParams($builder, $request);
 
             $items = $builder->get();
 
+            $pagination = $request->getPageBasedPagination(1, 20);
             $pageSize = $pagination->getSize();
             $pageNumber = $pagination->getPage();
 
@@ -73,14 +67,35 @@ trait JsonApiTrait
     }
 
     /**
+     * Applies JSON-API query parameters to the builder.
+     *
      * @param Builder $builder
      * @param RequestInterface $request
      * @return Builder
      */
-    protected function applyFilters(Builder $builder, RequestInterface $request)
+    protected function applyQueryParams(Builder $builder, RequestInterface $request)
     {
         $filters = $request->getFiltering();
+        $builder = $this->applyFilters($builder, $filters);
 
+        $sorting = $request->getSorting();
+        $builder = $this->applySorting($builder, $sorting);
+
+        $included = $request->getQueryParam('include', '');
+        $builder = $this->applyIncludes($builder, $included);
+
+        return $builder;
+    }
+
+    /**
+     * Applies filtering to the builder.
+     *
+     * @param Builder $builder
+     * @param array $filters
+     * @return Builder
+     */
+    protected function applyFilters(Builder $builder, array $filters)
+    {
         foreach ($filters as $filterKey => $filterValue) {
             $builder = $builder->where($filterKey, '=', $filterValue);
         }
@@ -89,14 +104,14 @@ trait JsonApiTrait
     }
 
     /**
+     * Applies sorting to the builder.
+     *
      * @param Builder $builder
-     * @param RequestInterface $request
+     * @param array $sorting
      * @return Builder
      */
-    protected function applySorting(Builder $builder, RequestInterface $request)
+    protected function applySorting(Builder $builder, array $sorting)
     {
-        $sorting = $request->getSorting();
-
         foreach ($sorting as $sort) {
             $direction = substr($sort, 0, 1) == '-' ? 'DESC' : 'ASC';
             $column = str_replace('-', '', $sort);
@@ -108,18 +123,19 @@ trait JsonApiTrait
     }
 
     /**
+     * Applies includes to the builder.
+     *
      * @param Builder $builder
-     * @param RequestInterface $request
+     * @param string $included
      * @return Builder
      */
-    protected function applyIncludes(Builder $builder, RequestInterface $request)
+    protected function applyIncludes(Builder $builder, $included)
     {
-        $includeQueryParam = $request->getQueryParam("include", "");
-        if ($includeQueryParam === "") {
+        if ($included === "") {
             return $builder;
         }
 
-        $relationshipNames = explode(",", $includeQueryParam);
+        $relationshipNames = explode(",", $included);
         foreach ($relationshipNames as $relationship) {
             $builder = $builder->with(Str::camel($relationship));
         }
@@ -238,6 +254,8 @@ trait JsonApiTrait
     }
 
     /**
+     * Hydrates a model from the request.
+     *
      * @param $domainObject
      * @param RequestInterface $request
      * @return mixed
@@ -248,6 +266,8 @@ trait JsonApiTrait
     }
 
     /**
+     * Hydrates a relationship from the request.
+     *
      * @param $domainObject
      * @param $relationshipName
      * @param RequestInterface $request
@@ -264,6 +284,8 @@ trait JsonApiTrait
     }
 
     /**
+     * Saves the model and returns a fresh instance loaded from the database.
+     *
      * @param Model $model
      * @return Model
      */
