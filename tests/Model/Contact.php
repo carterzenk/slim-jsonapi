@@ -47,12 +47,12 @@ class Contact extends BaseModel
         'birthday',
     ];
 
-    protected $visibleRelationships = [
-        'owner',
+    protected $with = [
         'assignee'
     ];
 
-    protected $defaultIncludedRelationships = [
+    protected $visibleRelationships = [
+        'owner',
         'assignee'
     ];
 

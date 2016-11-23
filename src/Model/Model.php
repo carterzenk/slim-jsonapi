@@ -17,14 +17,9 @@ class Model extends EloquentModel implements ModelInterface
     protected $visibleRelationships = [];
 
     /**
-     * @var array
-     */
-    protected $defaultIncludedRelationships = [];
-
-    /**
      * @var string|null
      */
-    protected $resourceType = null;
+    protected $resourceType;
 
     /**
      * @inheritdoc
@@ -47,7 +42,7 @@ class Model extends EloquentModel implements ModelInterface
      */
     public function getDefaultIncludedRelationships()
     {
-        return $this->defaultIncludedRelationships;
+        return $this->with;
     }
 
     /**

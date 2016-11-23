@@ -61,6 +61,12 @@ class AppTest extends BaseTestCase
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
+    public function testGetUsersSuccess()
+    {
+        $this->client->get('/users');
+        $this->assertEquals(200, $this->client->response->getStatusCode());
+    }
+
     public function testGetContactsFiltersSuccess()
     {
         $this->client->get('/leads?filter[owner_id]=1');
@@ -73,7 +79,7 @@ class AppTest extends BaseTestCase
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
-    public function testGetUsersSuccess()
+    public function testGetUserSuccess()
     {
         $this->client->get('/users/1');
         $this->assertEquals(200, $this->client->response->getStatusCode());

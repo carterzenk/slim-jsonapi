@@ -154,6 +154,11 @@ class SlimInstance
         );
 
         $app->get(
+            '/users',
+            '\CarterZenk\Tests\JsonApi\Controller\UsersController:indexResourceAction'
+        );
+
+        $app->get(
             '/users/{id}',
             '\CarterZenk\Tests\JsonApi\Controller\UsersController:findResourceAction'
         );
