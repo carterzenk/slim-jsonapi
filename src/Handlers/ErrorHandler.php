@@ -2,12 +2,12 @@
 
 namespace CarterZenk\JsonApi\Handlers;
 
-use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use WoohooLabs\Yin\JsonApi\Exception\ApplicationError;
 use WoohooLabs\Yin\JsonApi\Exception\JsonApiExceptionInterface;
 use WoohooLabs\Yin\JsonApi\Serializer\DefaultSerializer;
+use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
 
 class ErrorHandler
 {
