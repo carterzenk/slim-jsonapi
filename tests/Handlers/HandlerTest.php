@@ -3,6 +3,8 @@
 namespace CarterZenk\Tests\JsonApi\Handlers;
 
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
+use CarterZenk\JsonApi\Handlers\NotAllowedHandler;
+use CarterZenk\JsonApi\Handlers\NotFoundHandler;
 use CarterZenk\JsonApi\Handlers\PhpErrorHandler;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -47,6 +49,32 @@ class HandlerTest extends BaseTestCase
 
         $error = new \TypeError('This is a type error');
         $exceptionResponse = $errorHandler($request, $response, $error);
+        $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
+    }
+
+    public function testNotAllowedHandler()
+    {
+        $serializer = new DefaultSerializer();
+        $errorHandler = new NotAllowedHandler($serializer, true);
+        $exceptionFactory = new DefaultExceptionFactory();
+        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
+        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
+        $response = new Response();
+
+        $exceptionResponse = $errorHandler($request, $response, ['GET', 'PUT', 'PATCH']);
+        $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
+    }
+
+    public function testNotFoundHandler()
+    {
+        $serializer = new DefaultSerializer();
+        $errorHandler = new NotFoundHandler($serializer, true);
+        $exceptionFactory = new DefaultExceptionFactory();
+        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
+        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
+        $response = new Response();
+
+        $exceptionResponse = $errorHandler($request, $response);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
     }
 }
