@@ -4,7 +4,7 @@
 [![Quality Score][ico-code-quality]][link-scrutinizer]
 [![Build Status][ico-build-status]][link-scrutinizer]
 
-**A JSON API encoder for Eloquent models and Slim Framework.**
+**A JSON API encoder for Eloquent models and Slim Framework. WIP.**
 
 [ico-code-coverage]: https://img.shields.io/scrutinizer/coverage/g/carterzenk/slim-jsonapi.svg
 [ico-code-quality]: https://scrutinizer-ci.com/g/carterzenk/slim-jsonapi/badges/quality-score.png

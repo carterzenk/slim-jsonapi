@@ -6,31 +6,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use WoohooLabs\Yin\JsonApi\Exception\ApplicationError;
 use WoohooLabs\Yin\JsonApi\Exception\JsonApiExceptionInterface;
-use WoohooLabs\Yin\JsonApi\Serializer\DefaultSerializer;
-use WoohooLabs\Yin\JsonApi\Serializer\SerializerInterface;
 
-class ErrorHandler
+class ErrorHandler extends AbstractErrorHandler
 {
-    /**
-     * @var SerializerInterface
-     */
-    protected $serializer;
-
-    /**
-     * @var bool
-     */
-    protected $displayErrorDetails;
-
-    /**
-     * JsonApiExceptionHandler constructor.
-     * @param bool $displayErrorDetails
-     */
-    public function __construct($displayErrorDetails = false)
-    {
-        $this->serializer = new DefaultSerializer();
-        $this->displayErrorDetails = (bool) $displayErrorDetails;
-    }
-
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
@@ -59,11 +37,11 @@ class ErrorHandler
     protected function getExceptionMeta(\Exception $exception)
     {
         return [
-            "code" => $exception->getCode(),
-            "message" => $exception->getMessage(),
-            "file" => $exception->getFile(),
-            "line" => $exception->getLine(),
-            "trace" => $exception->getTrace()
+            'code' => $exception->getCode(),
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $exception->getTrace()
         ];
     }
 }
