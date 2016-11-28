@@ -305,10 +305,15 @@ trait JsonApiTrait
      *
      * @param Model $model
      * @return Model
+     * @throws \CarterZenk\JsonApi\Exceptions\BadRequest
      */
     protected function saveModel(Model $model)
     {
-        $model->save();
-        return $model->fresh();
+        try {
+            $model->save();
+            return $model->fresh();
+        } catch (\Exception $e) {
+            throw $this->exceptionFactory->createBadRequestException();
+        }
     }
 }
