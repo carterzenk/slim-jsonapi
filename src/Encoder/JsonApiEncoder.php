@@ -4,11 +4,11 @@ namespace CarterZenk\JsonApi\Encoder;
 
 use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
+use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
+use CarterZenk\JsonApi\Exceptions\ExceptionFactory;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use Illuminate\Contracts\Pagination\Paginator;
-use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
-use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 class JsonApiEncoder extends EloquentEncoder
@@ -35,7 +35,7 @@ class JsonApiEncoder extends EloquentEncoder
         ExceptionFactoryInterface $exceptionFactory = null
     ) {
         $this->documentFactory = isset($documentFactory) ? $documentFactory : new DocumentFactory();
-        $this->exceptionFactory = isset($exceptionFactory) ? $exceptionFactory : new DefaultExceptionFactory();
+        $this->exceptionFactory = isset($exceptionFactory) ? $exceptionFactory : new ExceptionFactory();
 
         parent::__construct($serializer);
     }
