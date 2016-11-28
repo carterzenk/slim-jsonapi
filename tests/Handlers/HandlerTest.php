@@ -2,6 +2,7 @@
 
 namespace CarterZenk\Tests\JsonApi\Handlers;
 
+use CarterZenk\JsonApi\Exceptions\Forbidden;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
 use CarterZenk\JsonApi\Handlers\NotAllowedHandler;
 use CarterZenk\JsonApi\Handlers\NotFoundHandler;
@@ -76,5 +77,11 @@ class HandlerTest extends BaseTestCase
 
         $exceptionResponse = $errorHandler($request, $response);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
+    }
+
+    public function testForbiddenError()
+    {
+        $error = new Forbidden();
+        $this->assertInstanceOf(Forbidden::class, $error);
     }
 }
