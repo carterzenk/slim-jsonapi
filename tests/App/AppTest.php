@@ -3,6 +3,7 @@
 namespace CarterZenk\Tests\JsonApi\App;
 
 use CarterZenk\JsonApi\App\App;
+use CarterZenk\JsonApi\Exceptions\ResourceNotExists;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use WoohooLabs\Yin\JsonApi\Exception\ClientGeneratedIdNotSupported;
@@ -279,7 +280,7 @@ class AppTest extends BaseTestCase
 
     public function testErrorResponse()
     {
-        $this->expectException(ResourceNotFound::class);
+        $this->expectException(ResourceNotExists::class);
         $this->client->get('/leads/5948');
     }
 

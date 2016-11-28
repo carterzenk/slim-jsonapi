@@ -3,9 +3,9 @@
 namespace CarterZenk\JsonApi\Controller;
 
 use CarterZenk\JsonApi\Encoder\EncoderInterface;
+use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use Psr\Http\Message\ResponseInterface;
-use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 abstract class JsonApiController

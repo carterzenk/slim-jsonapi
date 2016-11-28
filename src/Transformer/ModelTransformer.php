@@ -58,8 +58,18 @@ class ModelTransformer
     public function getAttributes(Model $model)
     {
         $attributes = [];
+        $relationshipParser = new RelationshipParser($model, null);
+        $foreignKeys = $relationshipParser->getForeignKeys();
 
         foreach ($model->attributesToArray() as $key => $value) {
+            if ($key === $model->getKeyName()) {
+                continue;
+            }
+
+            if (in_array($key, $foreignKeys)) {
+                continue;
+            }
+
             $attributes[$key] = function ($domainObject) use ($value) {
                 return $value;
             };

@@ -38,6 +38,26 @@ class RelationshipParser implements RelationshipParserInterface
     }
 
     /**
+     * @return string[]
+     */
+    public function getForeignKeys()
+    {
+        $foreignKeys = [];
+
+        foreach ($this->model->getVisibleRelationships() as $name) {
+            $relation = $this->getRelation($name);
+
+            if (!($relation instanceof BelongsTo)) {
+                continue;
+            }
+
+            $foreignKeys[] = $relation->getForeignKey();
+        }
+
+        return $foreignKeys;
+    }
+
+    /**
      * @inheritdoc
      * @throws RelationshipNotExists
      */

@@ -2,13 +2,14 @@
 
 namespace CarterZenk\JsonApi\Controller;
 
+use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use CarterZenk\JsonApi\Model\Paginator;
+use CarterZenk\JsonApi\Transformer\Transformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
 use Illuminate\Support\Str;
-use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 trait JsonApiTrait
@@ -157,7 +158,9 @@ trait JsonApiTrait
             $model = $this->getBuilder()->find($id);
 
             if (is_null($model)) {
-                throw $this->exceptionFactory->createResourceNotFoundException($request);
+                $transformer = new Transformer();
+                $type = $transformer->getType($this->getModel());
+                throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
 
             return $model;
@@ -181,7 +184,9 @@ trait JsonApiTrait
             }
 
             if (is_null($model)) {
-                throw $this->exceptionFactory->createResourceNotFoundException($request);
+                $transformer = new Transformer();
+                $type = $transformer->getType($this->getModel());
+                throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
 
             return $model;

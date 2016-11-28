@@ -15,23 +15,6 @@ class Contact extends BaseModel
         'owner_id'
     ];
 
-    protected $visible = [
-        'f_name',
-        'l_name',
-        'email',
-        'title',
-        'phone',
-        'phone_cell',
-        'phone_office',
-        'address',
-        'city',
-        'state',
-        'zip',
-        'birthday',
-        'created_at',
-        'updated_at'
-    ];
-
     protected $fillable = [
         'f_name',
         'l_name',

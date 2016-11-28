@@ -7,11 +7,11 @@ use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
 use CarterZenk\JsonApi\Encoder\EncoderInterface;
 use CarterZenk\JsonApi\Encoder\JsonApiEncoder;
+use CarterZenk\JsonApi\Exceptions\ExceptionFactory;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
 use CarterZenk\JsonApi\Hydrator\Hydrator;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
-use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\Tests\JsonApi\Controller\ContactsController;
 use CarterZenk\Tests\JsonApi\Controller\UsersController;
 use CarterZenk\Tests\JsonApi\Handlers\InvocationStrategy;
@@ -19,10 +19,8 @@ use Illuminate\Filesystem\ClassFinder;
 use Illuminate\Filesystem\Filesystem;
 use Interop\Container\ContainerInterface;
 use Slim\Interfaces\InvocationStrategyInterface;
-use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
-use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
+use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class SlimInstance
 {
@@ -94,7 +92,7 @@ class SlimInstance
         };
 
         $container[ExceptionFactoryInterface::class] = function (ContainerInterface $container) {
-            return new DefaultExceptionFactory();
+            return new ExceptionFactory();
         };
 
         $container[HydratorInterface::class] = function (ContainerInterface $container) {
