@@ -42,6 +42,16 @@ trait JsonApiTrait
     }
 
     /**
+     * Returns the instance of a new model to hydrate.
+     *
+     * @return Model
+     */
+    public function createModel()
+    {
+        return $this->getModel()->newInstance();
+    }
+
+    /**
      * Returns a list of resources based on pagination criteria.
      *
      * @return callable
@@ -201,7 +211,7 @@ trait JsonApiTrait
     protected function createResourceCallable()
     {
         return function (RequestInterface $request) {
-            $model = $this->getModel()->newInstance();
+            $model = $this->createModel();
 
             $model = $this->hydrate($model, $request);
             return $this->saveModel($model);
