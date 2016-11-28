@@ -306,7 +306,7 @@ trait JsonApiTrait
      * @param Model $model
      * @return Model
      */
-    private function saveModel(Model $model)
+    protected function saveModel(Model $model)
     {
         $model->save();
         return $model->fresh();
