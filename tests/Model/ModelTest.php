@@ -43,4 +43,20 @@ class ModelTest extends BaseTestCase
         $organization = new Organization();
         $this->assertEquals([], $organization->getFillableRelationships());
     }
+
+    public function testAddFillableRelationship()
+    {
+        $contact = new Contact();
+        $contact->addFillableRelationship('someRelationship');
+        $fillable = $contact->getFillableRelationships();
+        $this->assertTrue(in_array('someRelationship', $fillable));
+    }
+
+    public function testRemoveFillableRelationship()
+    {
+        $contact = new Contact();
+        $contact->removeFillableRelationship('assignee');
+        $fillable = $contact->getFillableRelationships();
+        $this->assertFalse(in_array('assignee', $fillable));
+    }
 }

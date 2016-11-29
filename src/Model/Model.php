@@ -40,6 +40,24 @@ class Model extends EloquentModel implements ModelInterface
     /**
      * @inheritdoc
      */
+    public function addFillableRelationship($name)
+    {
+        $this->fillableRelationships[] = $name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function removeFillableRelationship($name)
+    {
+        if (($key = array_search($name, $this->fillableRelationships)) !== false) {
+            unset($this->fillableRelationships[$key]);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getDefaultIncludedRelationships()
     {
         return $this->with;
