@@ -7,6 +7,7 @@ use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\ConnectionResolver;
 use Illuminate\Database\Connectors\ConnectionFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Events\Dispatcher;
 use Slim\App as SlimApp;
 
 class App extends SlimApp
@@ -18,6 +19,7 @@ class App extends SlimApp
     public function __construct($container)
     {
         $this->bootEloquent($container);
+
         parent::__construct($container);
     }
 
@@ -25,7 +27,7 @@ class App extends SlimApp
      * Sets up the eloquent connection resolver and capsule manager.
      * @param $container
      */
-    private function bootEloquent($container)
+    protected function bootEloquent($container)
     {
         $connectionSettings = $container['settings']['db'];
 
@@ -42,6 +44,7 @@ class App extends SlimApp
         $capsule = new Manager();
         $capsule->addConnection($connectionSettings);
         $capsule->setAsGlobal();
+        $capsule->setEventDispatcher(new Dispatcher($eloquentContainer));
         $capsule->bootEloquent();
     }
 }
