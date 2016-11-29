@@ -15,6 +15,11 @@ use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 trait JsonApiTrait
 {
     /**
+     * @var string[]
+     */
+    protected $builderColumns = ['*'];
+
+    /**
      * @var HydratorInterface
      */
     protected $hydrator;
@@ -67,7 +72,7 @@ trait JsonApiTrait
             $builder = $this->getBuilder();
             $builder = $this->applyQueryParams($builder, $request);
 
-            $items = $builder->get();
+            $items = $builder->get($this->builderColumns);
 
             $pagination = $request->getPageBasedPagination(1, 20);
             $pageSize = $pagination->getSize();
@@ -170,7 +175,7 @@ trait JsonApiTrait
     protected function findResourceCallable($id)
     {
         return function (RequestInterface $request) use ($id) {
-            $model = $this->getBuilder()->find($id);
+            $model = $this->getBuilder()->find($id, $this->builderColumns);
 
             if (is_null($model)) {
                 $transformer = new Transformer();
@@ -193,7 +198,7 @@ trait JsonApiTrait
     {
         return function (RequestInterface $request) use ($id, $relationship) {
             try {
-                $model = $this->getBuilder()->with(Str::camel($relationship))->find($id);
+                $model = $this->getBuilder()->with(Str::camel($relationship))->find($id, $this->builderColumns);
             } catch (RelationNotFoundException $e) {
                 throw $this->exceptionFactory->createRelationshipNotExists($relationship);
             }
