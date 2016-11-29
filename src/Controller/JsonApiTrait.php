@@ -5,6 +5,7 @@ namespace CarterZenk\JsonApi\Controller;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use CarterZenk\JsonApi\Model\Paginator;
+use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\JsonApi\Model\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,6 +29,11 @@ trait JsonApiTrait
      * @var ExceptionFactoryInterface
      */
     protected $exceptionFactory;
+
+    /**
+     * @var FilteringStrategyInterface
+     */
+    protected $filteringStrategy;
 
     /**
      * Returns an Eloquent Query Builder.
@@ -97,7 +103,7 @@ trait JsonApiTrait
     protected function applyQueryParams(Builder $builder, RequestInterface $request)
     {
         $filters = $request->getFiltering();
-        $builder = $this->applyFilters($builder, $filters);
+        $builder = $this->filteringStrategy->applyFilters($builder, $filters);
 
         $sorting = $request->getSorting();
         $builder = $this->applySorting($builder, $sorting);
