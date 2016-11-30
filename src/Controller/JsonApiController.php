@@ -5,6 +5,7 @@ namespace CarterZenk\JsonApi\Controller;
 use CarterZenk\JsonApi\Encoder\EncoderInterface;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
+use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
@@ -38,15 +39,18 @@ abstract class JsonApiController
      * @param EncoderInterface $encoder
      * @param ExceptionFactoryInterface $exceptionFactory
      * @param HydratorInterface $hydrator
+     * @param FilteringStrategyInterface $filteringStrategy
      */
     public function __construct(
         EncoderInterface $encoder,
         ExceptionFactoryInterface $exceptionFactory,
-        HydratorInterface $hydrator
+        HydratorInterface $hydrator,
+        FilteringStrategyInterface $filteringStrategy
     ) {
         $this->encoder = $encoder;
         $this->exceptionFactory = $exceptionFactory;
         $this->hydrator = $hydrator;
+        $this->filteringStrategy = $filteringStrategy;
     }
 
     /**

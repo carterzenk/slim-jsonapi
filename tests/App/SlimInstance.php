@@ -12,7 +12,10 @@ use CarterZenk\JsonApi\Handlers\ErrorHandler;
 use CarterZenk\JsonApi\Hydrator\Hydrator;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
+use CarterZenk\JsonApi\Strategy\Filtering\ColumnEqualsValue;
+use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use CarterZenk\Tests\JsonApi\Controller\ContactsController;
+use CarterZenk\Tests\JsonApi\Controller\EloquentModelController;
 use CarterZenk\Tests\JsonApi\Controller\UsersController;
 use CarterZenk\Tests\JsonApi\Handlers\InvocationStrategy;
 use Illuminate\Filesystem\ClassFinder;
@@ -81,6 +84,10 @@ class SlimInstance
             return new ErrorHandler(true);
         };
 
+        $container[FilteringStrategyInterface::class] = function (ContainerInterface $container) {
+            return new ColumnEqualsValue();
+        };
+
         $container[InvocationStrategyInterface::class] = function (ContainerInterface $container) {
             return new InvocationStrategy(
                 $container->get(ExceptionFactoryInterface::class)
@@ -119,7 +126,8 @@ class SlimInstance
             return new ContactsController(
                 $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(HydratorInterface::class)
+                $container->get(HydratorInterface::class),
+                $container->get(FilteringStrategyInterface::class)
             );
         };
 
@@ -129,7 +137,19 @@ class SlimInstance
             return new UsersController(
                 $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(HydratorInterface::class)
+                $container->get(HydratorInterface::class),
+                $container->get(FilteringStrategyInterface::class)
+            );
+        };
+
+        $container['\CarterZenk\Tests\JsonApi\Controller\EloquentModelController'] = function (
+            ContainerInterface $container
+        ) {
+            return new EloquentModelController(
+                $container->get(EncoderInterface::class),
+                $container->get(ExceptionFactoryInterface::class),
+                $container->get(HydratorInterface::class),
+                $container->get(FilteringStrategyInterface::class)
             );
         };
     }

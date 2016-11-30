@@ -3,6 +3,7 @@
 namespace CarterZenk\Tests\JsonApi\Controller;
 
 use CarterZenk\JsonApi\Controller\JsonApiController;
+use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
 use CarterZenk\JsonApi\Serializer\Serializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -17,5 +18,12 @@ class ControllerTest extends BaseTestCase
         $this->assertEquals(true, class_exists(JsonApi::class));
         $this->assertEquals(true, class_exists(JsonApiController::class));
         $this->assertEquals(true, class_exists(ContactsController::class));
+    }
+
+    public function testInvalidModelThrowsError()
+    {
+        $this->expectException(InvalidDomainObjectException::class);
+        $controller = $this->app->getContainer()->get('\CarterZenk\Tests\JsonApi\Controller\EloquentModelController');
+        $controller->getModel();
     }
 }

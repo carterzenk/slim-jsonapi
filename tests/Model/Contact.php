@@ -28,6 +28,7 @@ class Contact extends BaseModel
         'state',
         'zip',
         'birthday',
+        'invalid'
     ];
 
     protected $with = [
