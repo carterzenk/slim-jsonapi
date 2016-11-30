@@ -117,22 +117,6 @@ trait JsonApiTrait
     }
 
     /**
-     * Applies filtering to the builder.
-     *
-     * @param Builder $builder
-     * @param array $filters
-     * @return Builder
-     */
-    protected function applyFilters(Builder $builder, array $filters)
-    {
-        foreach ($filters as $filterKey => $filterValue) {
-            $builder = $builder->where($filterKey, '=', $filterValue);
-        }
-
-        return $builder;
-    }
-
-    /**
      * Applies sorting to the builder.
      *
      * @param Builder $builder

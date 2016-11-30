@@ -15,6 +15,7 @@ use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use CarterZenk\JsonApi\Strategy\Filtering\ColumnEqualsValue;
 use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use CarterZenk\Tests\JsonApi\Controller\ContactsController;
+use CarterZenk\Tests\JsonApi\Controller\EloquentModelController;
 use CarterZenk\Tests\JsonApi\Controller\UsersController;
 use CarterZenk\Tests\JsonApi\Handlers\InvocationStrategy;
 use Illuminate\Filesystem\ClassFinder;
@@ -134,6 +135,17 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new UsersController(
+                $container->get(EncoderInterface::class),
+                $container->get(ExceptionFactoryInterface::class),
+                $container->get(HydratorInterface::class),
+                $container->get(FilteringStrategyInterface::class)
+            );
+        };
+
+        $container['\CarterZenk\Tests\JsonApi\Controller\EloquentModelController'] = function (
+            ContainerInterface $container
+        ) {
+            return new EloquentModelController(
                 $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
                 $container->get(HydratorInterface::class),

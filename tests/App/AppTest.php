@@ -3,6 +3,7 @@
 namespace CarterZenk\Tests\JsonApi\App;
 
 use CarterZenk\JsonApi\App\App;
+use CarterZenk\JsonApi\Exceptions\BadRequest;
 use CarterZenk\JsonApi\Exceptions\ResourceNotExists;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
@@ -299,5 +300,18 @@ class AppTest extends BaseTestCase
     {
         $this->expectException(RelationshipNotExists::class);
         $this->client->get('/users/1/relationships/someinvalidrelationship');
+    }
+
+    public function testBadRequestError()
+    {
+        $this->expectException(BadRequest::class);
+        $this->client->post('/leads', [
+            'data' => [
+                'type' => 'lead',
+                'attributes' => [
+                    'invalid' => '33212837492048294839403988457575'
+                ]
+            ]
+        ]);
     }
 }
