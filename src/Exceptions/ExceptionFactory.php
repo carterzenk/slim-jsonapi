@@ -5,6 +5,7 @@ namespace CarterZenk\JsonApi\Exceptions;
 use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory as YinDefaultExceptionFactory;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 use WoohooLabs\Yin\JsonApi\Schema\ErrorSource;
+use WoohooLabs\Yin\JsonApi\Schema\ResourceIdentifier;
 
 class ExceptionFactory extends YinDefaultExceptionFactory implements ExceptionFactoryInterface
 {
@@ -53,6 +54,11 @@ class ExceptionFactory extends YinDefaultExceptionFactory implements ExceptionFa
      */
     public function createResourceNotExistsException($type, $id)
     {
-        return new ResourceNotExists($type, $id);
+        $identifier = new ResourceIdentifier();
+
+        $identifier->setType($type);
+        $identifier->setId($id);
+
+        return new ResourceNotExists($identifier);
     }
 }

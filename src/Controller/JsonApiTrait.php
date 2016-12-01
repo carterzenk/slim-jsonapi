@@ -9,6 +9,7 @@ use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\JsonApi\Model\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
 use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
@@ -50,6 +51,7 @@ trait JsonApiTrait
     public function getModel()
     {
         $model = $this->getBuilder()->getModel();
+
         if ($model instanceof Model) {
             return $model;
         } else {
@@ -165,15 +167,14 @@ trait JsonApiTrait
     protected function findResourceCallable($id)
     {
         return function (RequestInterface $request) use ($id) {
-            $model = $this->getBuilder()->find($id, $this->builderColumns);
-
-            if (is_null($model)) {
+            try {
+                return $this->getBuilder()->findOrFail($id, $this->builderColumns);
+            } catch (ModelNotFoundException $modelNotFoundException) {
                 $transformer = new Transformer();
                 $type = $transformer->getType($this->getModel());
+
                 throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
-
-            return $model;
         };
     }
 
@@ -188,18 +189,17 @@ trait JsonApiTrait
     {
         return function (RequestInterface $request) use ($id, $relationship) {
             try {
-                $model = $this->getBuilder()->with(Str::camel($relationship))->find($id, $this->builderColumns);
-            } catch (RelationNotFoundException $e) {
+                return $this->getBuilder()
+                    ->with(Str::camel($relationship))
+                    ->findOrFail($id, $this->builderColumns);
+            } catch (RelationNotFoundException $relationNotFoundException) {
                 throw $this->exceptionFactory->createRelationshipNotExists($relationship);
-            }
-
-            if (is_null($model)) {
+            } catch (ModelNotFoundException $modelNotFoundException) {
                 $transformer = new Transformer();
                 $type = $transformer->getType($this->getModel());
+
                 throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
-
-            return $model;
         };
     }
 
@@ -279,7 +279,11 @@ trait JsonApiTrait
      */
     protected function hydrate($domainObject, RequestInterface $request)
     {
-        return $this->hydrator->hydrate($request, $this->exceptionFactory, $domainObject);
+        return $this->hydrator->hydrate(
+            $request,
+            $this->exceptionFactory,
+            $domainObject
+        );
     }
 
     /**
@@ -310,7 +314,7 @@ trait JsonApiTrait
     protected function saveModel(Model $model)
     {
         try {
-            $model->save();
+            $model->saveOrFail();
             return $model->fresh();
         } catch (\Exception $e) {
             throw $this->exceptionFactory->createBadRequestException();
