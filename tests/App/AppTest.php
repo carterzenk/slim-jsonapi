@@ -4,6 +4,7 @@ namespace CarterZenk\Tests\JsonApi\App;
 
 use CarterZenk\JsonApi\App\App;
 use CarterZenk\JsonApi\Exceptions\BadRequest;
+use CarterZenk\JsonApi\Exceptions\RelatedResourceNotFound;
 use CarterZenk\JsonApi\Exceptions\ResourceNotExists;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
@@ -310,6 +311,31 @@ class AppTest extends BaseTestCase
                 'type' => 'lead',
                 'attributes' => [
                     'invalid' => '33212837492048294839403988457575'
+                ]
+            ]
+        ]);
+    }
+
+    public function testHydrateToManyRelationshipWithInvalidIdError()
+    {
+        $this->expectException(RelatedResourceNotFound::class);
+        $this->client->patch('/users/1', [
+            'data' => [
+                'type' => 'user',
+                'id' => '1',
+                'relationships' => [
+                    'owned-contacts' => [
+                        'data' => [
+                            [
+                                'type' => 'lead',
+                                'id' => '1'
+                            ],
+                            [
+                                'type' => 'lead',
+                                'id' => '700'
+                            ]
+                        ]
+                    ]
                 ]
             ]
         ]);

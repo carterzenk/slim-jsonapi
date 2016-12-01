@@ -2,36 +2,21 @@
 
 namespace CarterZenk\JsonApi\Exceptions;
 
-use WoohooLabs\Yin\JsonApi\Exception\JsonApiException;
-use WoohooLabs\Yin\JsonApi\Schema\Error;
+use WoohooLabs\Yin\JsonApi\Schema\ResourceIdentifier;
 
-class ResourceNotExists extends JsonApiException
+class ResourceNotExists extends ResourceNotFound
 {
-    protected $type;
-
-    protected $id;
-
-    public function __construct($type, $id)
-    {
-        $this->id = (string) $id;
-        $this->type = ucwords($type);
-
-        $message = $this->type.' '.$id.' is not available.';
-        parent::__construct($message);
-    }
-
     /**
-     * @inheritDoc
+     * ResourceNotExists constructor.
+     * @param ResourceIdentifier $identifier
      */
-    protected function getErrors()
+    public function __construct(ResourceIdentifier $identifier)
     {
-        return [
-            Error::create()
-                ->setStatus(404)
-                ->setCode("RESOURCE_NOT_FOUND")
-                ->setTitle($this->type.' Not Found')
-                ->setDetail($this->getMessage())
-                ->setId($this->id)
-        ];
+        $type = $identifier->getType();
+        $id = $identifier->getId();
+
+        parent::__construct(
+            'Resource '.$type.' with id '.$id.' was not found.'
+        );
     }
 }

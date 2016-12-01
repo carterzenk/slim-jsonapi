@@ -2,7 +2,9 @@
 
 namespace CarterZenk\JsonApi\Model;
 
+use CarterZenk\JsonApi\Exceptions\RelatedResourceNotFound;
 use CarterZenk\JsonApi\Transformer\LinksTrait;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,11 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
+use WoohooLabs\Yin\JsonApi\Schema\ErrorSource;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Hydrator\Relationship\ToOneRelationship as ToOneHydrator;
 use WoohooLabs\Yin\JsonApi\Hydrator\Relationship\ToManyRelationship as ToManyHydrator;
+use WoohooLabs\Yin\JsonApi\Schema\ResourceIdentifier;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class RelationshipParser implements RelationshipParserInterface
@@ -305,16 +309,29 @@ class RelationshipParser implements RelationshipParserInterface
             $name,
             $relation
         ) {
-            $id = $relationship->getResourceIdentifier()->getId();
-            $relatedModel = $relation->getRelated()->newQuery()->findOrFail($id);
-            $model->$name()->associate($relatedModel);
+            $resourceIdentifier = $relationship->getResourceIdentifier();
 
-            return $model;
+            try {
+                $relatedModel = $relation
+                    ->getRelated()
+                    ->newQuery()
+                    ->findOrFail($resourceIdentifier->getId());
+
+                if ($relation instanceof HasOne) {
+                    $model->$name()->save($relatedModel);
+                } else {
+                    $model->$name()->associate($relatedModel);
+                }
+
+                return $model;
+            } catch (ModelNotFoundException $modelNotFoundException) {
+                throw $this->createRelatedResourceNotExists($name, $resourceIdentifier);
+            }
         };
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @param Relation $relation
      * @return callable
      */
@@ -327,12 +344,33 @@ class RelationshipParser implements RelationshipParserInterface
             $name,
             $relation
         ) {
-            foreach ($relationship->getResourceIdentifierIds() as $id) {
-                $relatedModel = $relation->getRelated()->newQuery()->findOrFail($id);
-                $model->$name()->save($relatedModel);
+            $relatedModels = $relation
+                ->getRelated()
+                ->newQuery()
+                ->findMany($relationship->getResourceIdentifierIds());
+
+            foreach ($relationship->getResourceIdentifiers() as $resourceIdentifier) {
+                if (!$relatedModels->contains($resourceIdentifier->getId())) {
+                    throw $this->createRelatedResourceNotExists($name, $resourceIdentifier);
+                }
             }
+
+            $model->$name()->saveMany($relatedModels);
 
             return $model;
         };
+    }
+
+    /**
+     * @param string $name
+     * @param ResourceIdentifier $identifier
+     * @return RelatedResourceNotFound
+     */
+    private function createRelatedResourceNotExists($name, ResourceIdentifier $identifier)
+    {
+        $pointer = '/data/relationships/'.$this->getSlugCase($name);
+        $source = ErrorSource::fromPointer($pointer);
+
+        return new RelatedResourceNotFound($identifier, $source);
     }
 }
