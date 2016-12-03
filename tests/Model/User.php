@@ -32,7 +32,6 @@ class User extends BaseModel
         'ownedContacts'
     ];
 
-
     protected $visibleRelationships = [
         'ownedContacts',
         'assignedContacts',

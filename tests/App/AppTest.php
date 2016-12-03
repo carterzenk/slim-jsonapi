@@ -62,6 +62,7 @@ class AppTest extends BaseTestCase
     {
         $this->client->get('/leads');
         $this->assertEquals(200, $this->client->response->getStatusCode());
+        $this->dumpResponse();
     }
 
     public function testGetUsersSuccess()
@@ -102,7 +103,7 @@ class AppTest extends BaseTestCase
 
     public function testGetLeadsIncludeAssigneeAndOwnedContacts()
     {
-        $this->client->get('/leads?include=assignee,assignee.owned-contacts');
+        $this->client->get('/leads?include=assignee,owner');
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 

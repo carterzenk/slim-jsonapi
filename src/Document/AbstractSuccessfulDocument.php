@@ -2,8 +2,11 @@
 
 namespace CarterZenk\JsonApi\Document;
 
+use CarterZenk\JsonApi\Transformer\Container;
+use CarterZenk\JsonApi\Transformer\ContainerInterface;
 use CarterZenk\JsonApi\Transformer\LinksTrait;
 use CarterZenk\JsonApi\Transformer\ResourceTransformerInterface;
+use Psr\Http\Message\UriInterface;
 use WoohooLabs\Yin\JsonApi\Document\AbstractDocument;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
@@ -21,9 +24,9 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     protected $domainObject;
 
     /**
-     * @var ResourceTransformerInterface $transformer
+     * @var Container
      */
-    protected $transformer;
+    protected $container;
 
     /**
      * @var RequestInterface
@@ -47,21 +50,21 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
 
     /**
      * AbstractSuccessfulDocument constructor.
-     * @param ResourceTransformerInterface $transformer
      * @param RequestInterface $request
-     * @param string|null $jsonApiVersion
+     * @param $jsonApiVersion
      */
     public function __construct(
-        ResourceTransformerInterface $transformer,
         RequestInterface $request,
         $jsonApiVersion
     ) {
-        $this->transformer = $transformer;
         $this->request = $request;
         $this->jsonApiVersion = $jsonApiVersion;
 
-        $this->setPath($request);
-        $this->setBaseUri($request);
+        $uri = $request->getUri();
+        $this->path = $uri->getPath();
+        $this->setBaseUri($uri);
+
+        $this->container = new Container($this->baseUri);
     }
 
     /**
@@ -155,12 +158,10 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     }
 
     /**
-     * @param RequestInterface $request
+     * @param UriInterface $uri
      */
-    private function setBaseUri(RequestInterface $request)
+    private function setBaseUri(UriInterface $uri)
     {
-        $uri = $request->getUri();
-
         $baseUri = $uri->getScheme().'://';
         $baseUri .= $uri->getHost();
 
@@ -169,15 +170,6 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
         }
 
         $this->baseUri = $baseUri;
-        $this->transformer->setBaseUri($baseUri);
-    }
-
-    /**
-     * @param RequestInterface $request
-     */
-    private function setPath(RequestInterface $request)
-    {
-        $this->path = $request->getUri()->getPath();
     }
 
     /**
@@ -188,9 +180,11 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     protected function transformContent(Transformation $transformation, array $additionalMeta = [])
     {
         $content = $this->transformBaseContent($additionalMeta);
+
         // Data
         $this->fillData($transformation);
         $content["data"] = $transformation->data->transformPrimaryResources();
+
         // Included
         if ($transformation->data->hasIncludedResources()) {
             $content["included"] = $transformation->data->transformIncludedResources();
@@ -211,6 +205,7 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
         array $additionalMeta = []
     ) {
         $response = $this->getRelationshipContentInternal($relationshipName, $transformation, $additionalMeta);
+
         // Included
         if ($transformation->data->hasIncludedResources()) {
             $response["included"] = $transformation->data->transformIncludedResources();

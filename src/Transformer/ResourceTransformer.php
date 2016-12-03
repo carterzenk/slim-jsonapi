@@ -2,6 +2,8 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
+use CarterZenk\JsonApi\Model\Model;
+use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Transformer\AbstractResourceTransformer;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
@@ -31,44 +33,42 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
     protected $baseUri;
 
     /**
-     * @var array
+     * @var string[]
      */
-    protected $attributes;
+    protected $hiddenAttributes;
 
     /**
-     * @var array
+     * @var string[]
      */
     protected $defaultIncludedRelationships;
 
     /**
-     * @var array
+     * @var string[]
      */
     protected $relationships;
 
     /**
      * ResourceTransformer constructor.
      * @param string $type
-     * @param string $pluralType
      * @param string $idKey
      * @param string|null $baseUri
-     * @param array $attributes
+     * @param array $hiddenAttributes
      * @param array $defaultIncludedRelationships
      * @param array $relationships
      */
     public function __construct(
         $type,
-        $pluralType,
         $idKey,
         $baseUri,
-        array $attributes,
+        array $hiddenAttributes,
         array $defaultIncludedRelationships,
         array $relationships
     ) {
         $this->type = $type;
-        $this->pluralType = $pluralType;
+        $this->pluralType = Str::plural($type);
         $this->idKey = $idKey;
         $this->baseUri = $baseUri;
-        $this->attributes = $attributes;
+        $this->hiddenAttributes = $hiddenAttributes;
         $this->defaultIncludedRelationships = $defaultIncludedRelationships;
         $this->relationships = $relationships;
     }
@@ -86,7 +86,7 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
      */
     public function getId($domainObject)
     {
-        return $domainObject->$this->idKey;
+        return $domainObject->{$this->idKey};
     }
 
     /**
@@ -115,7 +115,32 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
      */
     public function getAttributes($domainObject)
     {
-        return $this->attributes;
+        if (!$domainObject instanceof Model) {
+            return [];
+        }
+
+        return $this->getModelAttributes($domainObject);
+    }
+
+    /**
+     * @param Model $model
+     * @return array
+     */
+    protected function getModelAttributes(Model $model)
+    {
+        $attributes = [];
+
+        foreach ($model->attributesToArray() as $key => $value) {
+            if (in_array($key, $this->hiddenAttributes)) {
+                continue;
+            }
+
+            $attributes[$key] = function ($domainObject) use ($value) {
+                return $value;
+            };
+        }
+
+        return $attributes;
     }
 
     /**

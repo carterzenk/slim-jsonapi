@@ -63,8 +63,9 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
+        $transformer = $this->container->getTransformer($this->domainObject);
         foreach ($this->getItems() as $item) {
-            $transformation->data->addPrimaryResource($this->transformer->transformToResource($transformation, $item));
+            $transformation->data->addPrimaryResource($transformer->transformToResource($transformation, $item));
         }
     }
 
@@ -79,15 +80,19 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
         if ($this->hasItems() === false) {
             return [];
         }
+
+        $transformer = $this->container->getTransformer($this->domainObject);
         $result = [];
+
         foreach ($this->getItems() as $item) {
-            $result[] = $this->transformer->transformRelationship(
+            $result[] = $transformer->transformRelationship(
                 $relationshipName,
                 $transformation,
                 $item,
                 $additionalMeta
             );
         }
+
         return $result;
     }
 }

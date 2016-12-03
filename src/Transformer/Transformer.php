@@ -4,7 +4,7 @@ namespace CarterZenk\JsonApi\Transformer;
 
 use WoohooLabs\Yin\JsonApi\Transformer\AbstractResourceTransformer;
 
-class Transformer extends AbstractResourceTransformer implements ResourceTransformerInterface
+class Transformer extends AbstractResourceTransformer
 {
     use LinksTrait;
 
