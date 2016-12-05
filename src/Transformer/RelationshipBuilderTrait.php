@@ -93,11 +93,16 @@ trait RelationshipBuilderTrait
 
             // Data
             if ($this->isRelationshipLoaded($domainObject, $name)) {
-                $relationship = $relationship->setData($domainObject->$name, $relatedTransformer);
+                $data = $domainObject->$name;
+
+                $relationship->setData($data, $relatedTransformer);
             } else {
-                $relationship = $relationship->setDataAsCallable(function () use ($domainObject, $name) {
+                $dataCallable = function () use ($domainObject, $name) {
                     return $domainObject->$name;
-                }, $relatedTransformer);
+                };
+
+                $relationship->setDataAsCallable($dataCallable, $relatedTransformer);
+                $relationship->omitWhenNotIncluded();
             }
 
             return $relationship;
@@ -130,11 +135,16 @@ trait RelationshipBuilderTrait
 
             // Data
             if ($this->isRelationshipLoaded($domainObject, $name)) {
-                $relationship = $relationship->setData($domainObject->$name, $relatedTransformer);
+                $data = $domainObject->$name;
+
+                $relationship->setData($data, $relatedTransformer);
             } else {
-                $relationship = $relationship->setDataAsCallable(function () use ($domainObject, $name) {
+                $dataCallable = function () use ($domainObject, $name) {
                     return $domainObject->$name;
-                }, $relatedTransformer);
+                };
+
+                $relationship->setDataAsCallable($dataCallable, $relatedTransformer);
+                $relationship->omitWhenNotIncluded();
             }
 
             return $relationship;
