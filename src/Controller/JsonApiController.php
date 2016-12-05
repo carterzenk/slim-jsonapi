@@ -182,7 +182,7 @@ abstract class JsonApiController
         $relationshipName = null
     ) {
         $resource = $resourceCallable($request);
-        $model = $this->getModel();
+        $model = $this->getModel()->newInstance();
 
         if (isset($resource)) {
             if (isset($relationshipName)) {
