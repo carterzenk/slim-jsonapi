@@ -51,14 +51,13 @@ class CreateContactsTable extends Migration
                 'city' => $faker->city,
                 'state' => $faker->stateAbbr,
                 'zip' => $faker->postcode,
-                'owner_id' => $faker->numberBetween(0, 5),
-                'assigned_id' => $faker->numberBetween(0, 5),
                 'birthday' => $faker->dateTimeBetween('-30 years', '-10 years'),
                 'created_at' => $faker->dateTimeBetween('-3 years', 'now'),
                 'updated_at' => $faker->dateTimeBetween('-3 years', 'now')
             ]);
 
-            $contact->setAttribute('owner_id', $faker->optional()->numberBetween(0, 5));
+            $contact->setAttribute('owner_id', $faker->numberBetween(1, 5));
+            $contact->setAttribute('assigned_id', $faker->numberBetween(1, 5));
 
             $contact->save();
         }

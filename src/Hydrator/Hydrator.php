@@ -8,18 +8,7 @@ use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 class Hydrator extends AbstractHydrator implements HydratorInterface
 {
-    /**
-     * @var ModelHydrator
-     */
-    private $modelHydrator;
-
-    /**
-     * Hydrator constructor.
-     */
-    public function __construct()
-    {
-        $this->modelHydrator = new ModelHydrator();
-    }
+    use ModelHydratorTrait;
 
     /**
      * @param string $clientGeneratedId
@@ -74,7 +63,7 @@ class Hydrator extends AbstractHydrator implements HydratorInterface
      */
     protected function setId($domainObject, $id)
     {
-        return $this->modelHydrator->setId($domainObject, $id);
+        return $domainObject;
     }
 
     /**
@@ -83,7 +72,7 @@ class Hydrator extends AbstractHydrator implements HydratorInterface
      */
     protected function getRelationshipHydrator($domainObject)
     {
-        return $this->modelHydrator->getRelationshipHydrator($domainObject);
+        return $this->getModelRelationshipHydrators($domainObject);
     }
 
     /**
@@ -92,6 +81,6 @@ class Hydrator extends AbstractHydrator implements HydratorInterface
      */
     protected function getAttributeHydrator($domainObject)
     {
-        return $this->modelHydrator->getAttributeHydrator($domainObject);
+        return $this->getModelAttributeHydrator($domainObject);
     }
 }

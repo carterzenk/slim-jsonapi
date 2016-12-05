@@ -14,20 +14,49 @@ use WoohooLabs\Yin\JsonApi\Schema\ResourceIdentifier;
 use WoohooLabs\Yin\JsonApi\Hydrator\Relationship\ToManyRelationship as ToManyHydrator;
 use WoohooLabs\Yin\JsonApi\Hydrator\Relationship\ToOneRelationship as ToOneHydrator;
 
-trait RelationshipHydratorTrait
+trait ModelHydratorTrait
 {
     use RelationshipHelperTrait;
 
     /**
-     * @inheritdoc
+     * @param Model $model
+     * @param $id
+     * @return Model
+     */
+    public function setModelId(Model $model, $id)
+    {
+        return $model;
+    }
+
+    /**
+     * @param Model $model
+     * @return callable[]
+     */
+    public function getModelAttributeHydrator(Model $model)
+    {
+        $hydrators = [];
+
+        foreach ($model->getFillable() as $fillableAttribute) {
+            $hydrators[$fillableAttribute] = function (Model $model, $attribute, $data, $attributeName) {
+                $model->setAttribute($attributeName, $attribute);
+                return $model;
+            };
+        }
+
+        return $hydrators;
+    }
+
+    /**
+     * @param Model $model
+     * @return callable[]
      * @throws RelationshipNotExists
      */
-    public function getRelationshipHydrators(Model $model)
+    public function getModelRelationshipHydrators(Model $model)
     {
         $hydrators = [];
 
         foreach ($model->getFillableRelationships() as $name) {
-            $relation = $this->getRelation($name);
+            $relation = $this->getRelation($model, $name);
 
             if ($this->isToOne($relation)) {
                 $hydratorCallable = $this->getToOneHydratorCallable($name, $relation);

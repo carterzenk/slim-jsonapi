@@ -2,14 +2,13 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use CarterZenk\JsonApi\Model\Model;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 interface ContainerInterface
 {
     /**
-     * @param mixed $model
+     * @param mixed $domainObject
      * @return ResourceTransformerInterface
      */
-    public function getTransformer($model);
+    public function getTransformer($domainObject);
 }
