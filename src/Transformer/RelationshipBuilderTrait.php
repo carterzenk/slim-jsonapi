@@ -5,6 +5,8 @@ namespace CarterZenk\JsonApi\Transformer;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
@@ -56,12 +58,14 @@ trait RelationshipBuilderTrait
             if ($this->isToOne($relation)) {
                 $relationships[$keyName] = $this->getToOneRelationshipCallable(
                     $container,
+                    $relation,
                     $name,
                     $keyName
                 );
             } elseif ($this->isToMany($relation)) {
                 $relationships[$keyName] = $this->getToManyRelationshipCallable(
                     $container,
+                    $relation,
                     $name,
                     $keyName
                 );
@@ -71,42 +75,38 @@ trait RelationshipBuilderTrait
         return $relationships;
     }
 
-    /**
-     * @param ContainerInterface $container
-     * @param string $name
-     * @param string $keyName
-     * @return callable
-     */
-    protected function getToOneRelationshipCallable(
+    public function getToOneRelationshipCallable(
         ContainerInterface $container,
+        Relation $relation,
         $name,
         $keyName
     ) {
-        return function ($domainObject) use ($name, $keyName, $container) {
+        return function ($domainObject) use ($name, $keyName, $relation, $container) {
             $primaryTransformer = $container->getTransformer($domainObject);
-
-            $relatedModel = $this->getRelation($domainObject, $name)
-                ->getRelated()
-                ->newInstance();
-
+            $relatedModel = $relation->getRelated()->newInstance();
             $relatedTransformer = $container->getTransformer($relatedModel);
-
-            // Data
-            $dataCallable = function () use ($domainObject, $name) {
-                return $domainObject->$name;
-            };
 
             // Links
             $links = $this->getRelationshipLinks($primaryTransformer, $domainObject, $keyName);
 
-            return ToOneRelationship::create()
-                ->setLinks($links)
-                ->setDataAsCallable($dataCallable, $relatedTransformer);
+            $relationship = ToOneRelationship::createWithLinks($links);
+
+            // Data
+            if ($this->isRelationshipLoaded($domainObject, $name)) {
+                $relationship = $relationship->setData($domainObject->$name, $relatedTransformer);
+            } else {
+                $relationship = $relationship->setDataAsCallable(function () use ($domainObject, $name) {
+                    return $domainObject->$name;
+                }, $relatedTransformer);
+            }
+
+            return $relationship;
         };
     }
 
     /**
      * @param ContainerInterface $container
+     * @param Relation $relation,
      * @param string $name
      * @param string $keyName
      * @return callable
@@ -114,30 +114,30 @@ trait RelationshipBuilderTrait
      */
     protected function getToManyRelationshipCallable(
         ContainerInterface $container,
+        Relation $relation,
         $name,
         $keyName
     ) {
-        return function ($domainObject) use ($name, $keyName, $container) {
+        return function ($domainObject) use ($name, $keyName, $relation, $container) {
             $primaryTransformer = $container->getTransformer($domainObject);
-
-            $relatedModel = $this->getRelation($domainObject, $name)
-                ->getRelated()
-                ->newInstance();
-
+            $relatedModel = $relation->getRelated()->newInstance();
             $relatedTransformer = $container->getTransformer($relatedModel);
-
-            // Data
-            $dataCallable = function () use ($domainObject, $name) {
-                return $domainObject->$name;
-            };
 
             // Links
             $links = $this->getRelationshipLinks($primaryTransformer, $domainObject, $keyName);
 
-            return ToManyRelationship::create()
-                ->setDataAsCallable($dataCallable, $relatedTransformer)
-                ->omitWhenNotIncluded()
-                ->setLinks($links);
+            $relationship = ToManyRelationship::createWithLinks($links);
+
+            // Data
+            if ($this->isRelationshipLoaded($domainObject, $name)) {
+                $relationship = $relationship->setData($domainObject->$name, $relatedTransformer);
+            } else {
+                $relationship = $relationship->setDataAsCallable(function () use ($domainObject, $name) {
+                    return $domainObject->$name;
+                }, $relatedTransformer);
+            }
+
+            return $relationship;
         };
     }
 

@@ -64,9 +64,18 @@ trait RelationshipHelperTrait
      * @param Relation $relation
      * @return bool
      */
-    protected function isKeyInAttributes(Relation $relation)
+    protected function isBelongsTo(Relation $relation)
     {
         return $relation instanceof BelongsTo;
+    }
+
+    /**
+     * @param Relation $relation
+     * @return bool
+     */
+    protected function isHasOne(Relation $relation)
+    {
+        return $relation instanceof HasOne;
     }
 
     /**
@@ -85,5 +94,10 @@ trait RelationshipHelperTrait
     protected function isToMany(Relation $relation)
     {
         return $relation instanceof HasMany || $relation instanceof BelongsToMany;
+    }
+
+    protected function isRelationshipLoaded(Model $model, $name)
+    {
+        return $model->relationLoaded($name);
     }
 }
