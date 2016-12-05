@@ -39,8 +39,8 @@ interface BuilderInterface
      * relationship method name, and the value set to a callable which returns a
      * relationships schema object.
      *
-     * @param Container $container
+     * @param ContainerInterface $container
      * @return \callable[]
      */
-    public function getRelationshipsTransformer(Container $container);
+    public function getRelationshipsTransformer(ContainerInterface $container);
 }

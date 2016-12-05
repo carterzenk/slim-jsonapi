@@ -2,6 +2,7 @@
 
 namespace CarterZenk\JsonApi\Encoder;
 
+use CarterZenk\JsonApi\Model\Model;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
@@ -11,6 +12,7 @@ interface EncoderInterface
      * Encodes a domain object.
      *
      * @param mixed $domainObject
+     * @param Model $model
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param array $additionalMeta
@@ -18,6 +20,7 @@ interface EncoderInterface
      */
     public function encodeResource(
         $domainObject,
+        Model $model,
         RequestInterface $request,
         ResponseInterface $response,
         array $additionalMeta = []

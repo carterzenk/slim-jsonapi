@@ -2,6 +2,7 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
+use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\Paginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -30,31 +31,51 @@ class Container extends PimpleContainer implements ContainerInterface
      */
     public function getTransformer($domainObject)
     {
-        if ($domainObject instanceof Model) {
-            $modelClass = get_class($domainObject);
-            $model = $domainObject;
-        } elseif ($domainObject instanceof Collection || $domainObject instanceof Paginator) {
-            $modelClass = $domainObject->getQueueableClass();
-            $model = new $modelClass();
-        } else {
-            throw new \InvalidArgumentException(get_class($domainObject).' is not a compatible type.');
-        }
+        $modelClass = $this->getModelClass($domainObject);
 
         if (!$this->offsetExists($modelClass)) {
-            $this->offsetSet($modelClass, function (Container $container) use ($model) {
-                $builder = new Builder($model, $container, $this->baseUri);
-
-                return new ResourceTransformer(
-                    $builder->getType(),
-                    $builder->getIdKey(),
-                    $this->baseUri,
-                    $builder->getAttributesToHide(),
-                    $builder->getDefaultIncludedRelationships(),
-                    $builder->getRelationshipsTransformer($container)
-                );
+            $this->offsetSet($modelClass, function (Container $container) use ($modelClass) {
+                return $this->createResourceTransformer($modelClass, $container);
             });
         }
 
         return $this->offsetGet($modelClass);
+    }
+
+    /**
+     * @param $domainObject
+     * @return string
+     * @throws InvalidDomainObjectException
+     */
+    private function getModelClass($domainObject)
+    {
+        if ($domainObject instanceof Model) {
+            return get_class($domainObject);
+        } elseif ($domainObject instanceof Collection || $domainObject instanceof Paginator) {
+            return $domainObject->getQueueableClass();
+        } else {
+            throw new InvalidDomainObjectException($domainObject);
+        }
+    }
+
+    /**
+     * @param $modelClass
+     * @param ContainerInterface $container
+     * @return ResourceTransformer
+     */
+    private function createResourceTransformer($modelClass, ContainerInterface $container)
+    {
+        $model = new $modelClass();
+
+        $builder = new Builder($model, $container, $this->baseUri);
+
+        return new ResourceTransformer(
+            $builder->getType(),
+            $builder->getIdKey(),
+            $this->baseUri,
+            $builder->getAttributesToHide(),
+            $builder->getDefaultIncludedRelationships(),
+            $builder->getRelationshipsTransformer($container)
+        );
     }
 }

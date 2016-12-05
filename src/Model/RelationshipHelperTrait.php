@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 
 trait RelationshipHelperTrait
@@ -33,22 +32,18 @@ trait RelationshipHelperTrait
         return $relation;
     }
 
+    protected function isRelationshipLoaded(Model $model, $name)
+    {
+        return $model->relationLoaded($name);
+    }
+
     /**
      * @param $name
      * @return RelationshipNotExists
      */
     private function createRelationshipNotExistsException($name)
     {
-        return new RelationshipNotExists($this->getSlugCase($name));
-    }
-
-    /**
-     * @param $name
-     * @return string
-     */
-    protected function getSlugCase($name)
-    {
-        return Str::slug(Str::snake(ucwords($name)));
+        return new RelationshipNotExists(StringHelper::slugCase($name));
     }
 
     /**
@@ -94,10 +89,5 @@ trait RelationshipHelperTrait
     protected function isToMany(Relation $relation)
     {
         return $relation instanceof HasMany || $relation instanceof BelongsToMany;
-    }
-
-    protected function isRelationshipLoaded(Model $model, $name)
-    {
-        return $model->relationLoaded($name);
     }
 }

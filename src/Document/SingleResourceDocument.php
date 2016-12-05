@@ -52,7 +52,7 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
-        $transformer = $this->container->getTransformer($this->domainObject);
+        $transformer = $this->container->getTransformer($this->model);
         $transformation->data->addPrimaryResource(
             $transformer->transformToResource($transformation, $this->domainObject)
         );
@@ -66,7 +66,7 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
         Transformation $transformation,
         array $additionalMeta = []
     ) {
-        $transformer = $this->container->getTransformer($this->domainObject);
+        $transformer = $this->container->getTransformer($this->model);
 
         return $transformer->transformRelationship(
             $relationshipName,

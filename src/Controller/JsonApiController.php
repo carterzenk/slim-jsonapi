@@ -182,12 +182,13 @@ abstract class JsonApiController
         $relationshipName = null
     ) {
         $resource = $resourceCallable($request);
+        $model = $this->getModel();
 
         if (isset($resource)) {
             if (isset($relationshipName)) {
                 $response = $this->encoder->encodeRelationship($resource, $request, $response, $relationshipName);
             } else {
-                $response = $this->encoder->encodeResource($resource, $request, $response);
+                $response = $this->encoder->encodeResource($resource, $model, $request, $response);
             }
         }
 

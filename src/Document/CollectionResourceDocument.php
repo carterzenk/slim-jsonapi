@@ -63,7 +63,7 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
-        $transformer = $this->container->getTransformer($this->domainObject);
+        $transformer = $this->container->getTransformer($this->model);
         foreach ($this->getItems() as $item) {
             $transformation->data->addPrimaryResource($transformer->transformToResource($transformation, $item));
         }
@@ -81,7 +81,7 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
             return [];
         }
 
-        $transformer = $this->container->getTransformer($this->domainObject);
+        $transformer = $this->container->getTransformer($this->model);
         $result = [];
 
         foreach ($this->getItems() as $item) {

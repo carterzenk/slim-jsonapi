@@ -2,10 +2,9 @@
 
 namespace CarterZenk\JsonApi\Document;
 
+use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Transformer\Container;
-use CarterZenk\JsonApi\Transformer\ContainerInterface;
 use CarterZenk\JsonApi\Transformer\LinksTrait;
-use CarterZenk\JsonApi\Transformer\ResourceTransformerInterface;
 use Psr\Http\Message\UriInterface;
 use WoohooLabs\Yin\JsonApi\Document\AbstractDocument;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
@@ -22,6 +21,11 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
      * @var mixed
      */
     protected $domainObject;
+
+    /**
+     * @var Model
+     */
+    protected $model;
 
     /**
      * @var Container
@@ -50,13 +54,16 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
 
     /**
      * AbstractSuccessfulDocument constructor.
+     * @param Model $model
      * @param RequestInterface $request
      * @param $jsonApiVersion
      */
     public function __construct(
+        Model $model,
         RequestInterface $request,
         $jsonApiVersion
     ) {
+        $this->model = $model;
         $this->request = $request;
         $this->jsonApiVersion = $jsonApiVersion;
 
