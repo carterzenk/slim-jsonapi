@@ -170,9 +170,10 @@ trait JsonApiTrait
             try {
                 return $this->getBuilder()->findOrFail($id, $this->builderColumns);
             } catch (ModelNotFoundException $modelNotFoundException) {
-                $transformer = new Transformer();
-                $type = $transformer->getType($this->getModel());
-
+                $model = $this->getModel()->newInstance();
+                $class = new \ReflectionClass($model);
+                $type = Str::slug(Str::snake(ucwords($class->getShortName())));
+                
                 throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
         };

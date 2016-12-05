@@ -9,8 +9,15 @@ use Pimple\Container as PimpleContainer;
 
 class Container extends PimpleContainer implements ContainerInterface
 {
+    /**
+     * @var string
+     */
     protected $baseUri;
 
+    /**
+     * Container constructor.
+     * @param string $baseUri
+     */
     public function __construct($baseUri)
     {
         $this->baseUri = $baseUri;
@@ -18,6 +25,9 @@ class Container extends PimpleContainer implements ContainerInterface
         parent::__construct();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getTransformer($domainObject)
     {
         if ($domainObject instanceof Model) {
