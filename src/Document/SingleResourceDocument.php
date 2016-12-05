@@ -35,7 +35,8 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
      */
     public function getResourceId()
     {
-        return $this->transformer->getId($this->domainObject);
+        $transformer = $this->container->getTransformer($this->domainObject);
+        return $transformer->getId($this->domainObject);
     }
 
     /**
@@ -51,8 +52,9 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
+        $transformer = $this->container->getTransformer($this->domainObject);
         $transformation->data->addPrimaryResource(
-            $this->transformer->transformToResource($transformation, $this->domainObject)
+            $transformer->transformToResource($transformation, $this->domainObject)
         );
     }
 
@@ -64,7 +66,9 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
         Transformation $transformation,
         array $additionalMeta = []
     ) {
-        return $this->transformer->transformRelationship(
+        $transformer = $this->container->getTransformer($this->domainObject);
+
+        return $transformer->transformRelationship(
             $relationshipName,
             $transformation,
             $this->domainObject,

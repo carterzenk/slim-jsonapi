@@ -7,6 +7,7 @@ use CarterZenk\JsonApi\Model\RelationshipParser;
 use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Schema\Links;
+use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class ModelTransformer
 {

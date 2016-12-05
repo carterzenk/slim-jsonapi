@@ -16,8 +16,7 @@ class DocumentTest extends BaseTestCase
 {
     private function getDocument($jsonApiVersion = null)
     {
-        $transformer = new Transformer();
-        $documentFactory = new DocumentFactory($transformer, $jsonApiVersion);
+        $documentFactory = new DocumentFactory($jsonApiVersion);
         $exceptionFactory = new DefaultExceptionFactory();
 
         $request = Request::createFromEnvironment(Environment::mock([
