@@ -30,6 +30,7 @@ abstract class EloquentEncoder implements EncoderInterface
      */
     public function encodeResource(
         $domainObject,
+        Model $model,
         RequestInterface $request,
         ResponseInterface $response,
         array $additionalMeta = []
@@ -37,7 +38,7 @@ abstract class EloquentEncoder implements EncoderInterface
         if ($this->isModel($domainObject)) {
             $content = $this->encodeModel($domainObject, $request, $additionalMeta);
         } elseif ($this->isPaginator($domainObject)) {
-            $content = $this->encodeCollection($domainObject, $request, $additionalMeta);
+            $content = $this->encodeCollection($domainObject, $model, $request, $additionalMeta);
         } else {
             throw new InvalidDomainObjectException($domainObject);
         }
@@ -83,12 +84,14 @@ abstract class EloquentEncoder implements EncoderInterface
 
     /**
      * @param Paginator $collection
+     * @param Model $model
      * @param RequestInterface $request
      * @param array $additionalMeta
      * @return array
      */
     abstract protected function encodeCollection(
         Paginator $collection,
+        Model $model,
         RequestInterface $request,
         array $additionalMeta
     );

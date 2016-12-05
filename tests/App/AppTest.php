@@ -15,6 +15,13 @@ use WoohooLabs\Yin\JsonApi\Exception\ResourceTypeMissing;
 
 class AppTest extends BaseTestCase
 {
+    private function dumpResponse()
+    {
+        $body = $this->client->response->getBody();
+        $body->rewind();
+        echo $body->getContents();
+    }
+
     public function testClassExists()
     {
         $this->assertEquals(true, class_exists(App::class));
@@ -79,6 +86,7 @@ class AppTest extends BaseTestCase
     {
         $this->client->get('/users/1');
         $this->assertEquals(200, $this->client->response->getStatusCode());
+        $this->dumpResponse();
     }
 
     public function testGetLeadsPagination()

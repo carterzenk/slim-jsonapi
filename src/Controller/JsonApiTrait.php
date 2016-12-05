@@ -8,6 +8,7 @@ use CarterZenk\JsonApi\Model\Paginator;
 use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\JsonApi\Model\Model;
+use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
@@ -16,6 +17,8 @@ use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 trait JsonApiTrait
 {
+    use TypeTrait;
+
     /**
      * @var string[]
      */
@@ -170,10 +173,7 @@ trait JsonApiTrait
             try {
                 return $this->getBuilder()->findOrFail($id, $this->builderColumns);
             } catch (ModelNotFoundException $modelNotFoundException) {
-                $model = $this->getModel()->newInstance();
-                $class = new \ReflectionClass($model);
-                $type = Str::slug(Str::snake(ucwords($class->getShortName())));
-                
+                $type = $this->getModelType($this->getModel());
                 throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
         };
@@ -196,9 +196,7 @@ trait JsonApiTrait
             } catch (RelationNotFoundException $relationNotFoundException) {
                 throw $this->exceptionFactory->createRelationshipNotExists($relationship);
             } catch (ModelNotFoundException $modelNotFoundException) {
-                $transformer = new Transformer();
-                $type = $transformer->getType($this->getModel());
-
+                $type = $this->getModelType($this->getModel());
                 throw $this->exceptionFactory->createResourceNotExistsException($type, $id);
             }
         };

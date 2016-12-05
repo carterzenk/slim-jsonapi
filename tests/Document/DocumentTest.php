@@ -3,6 +3,7 @@
 namespace CarterZenk\Tests\JsonApi\Document;
 
 use CarterZenk\JsonApi\Document\DocumentFactory;
+use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use CarterZenk\Tests\JsonApi\Model\Contact;
@@ -14,7 +15,7 @@ use WoohooLabs\Yin\JsonApi\Schema\JsonApi;
 
 class DocumentTest extends BaseTestCase
 {
-    private function getDocument($jsonApiVersion = null)
+    private function getDocument($jsonApiVersion = null, Model $model)
     {
         $documentFactory = new DocumentFactory($jsonApiVersion);
         $exceptionFactory = new DefaultExceptionFactory();
@@ -29,12 +30,12 @@ class DocumentTest extends BaseTestCase
 
         $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
 
-        return $documentFactory->createResourceDocument($request);
+        return $documentFactory->createResourceDocument($model, $request);
     }
 
     public function testNoJsonApiVersion()
     {
-        $document = $this->getDocument();
+        $document = $this->getDocument(null, new Contact());
 
         $meta = ['test' => 'test'];
         $resource = Contact::find(1);
@@ -49,7 +50,7 @@ class DocumentTest extends BaseTestCase
 
     public function testWithJsonApiVersion()
     {
-        $document = $this->getDocument('1.0');
+        $document = $this->getDocument('1.0', new Contact());
 
         $jsonApi = $document->getJsonApi();
         $this->assertInstanceOf(JsonApi::class, $jsonApi);
@@ -60,7 +61,7 @@ class DocumentTest extends BaseTestCase
 
     public function testLinksWithPort()
     {
-        $document = $this->getDocument();
+        $document = $this->getDocument(null, new Contact());
         $links = $document->getLinks();
 
         $this->assertEquals('/leads', $links->getSelf()->getHref());
