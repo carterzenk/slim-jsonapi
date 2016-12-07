@@ -86,7 +86,6 @@ class AppTest extends BaseTestCase
     {
         $this->client->get('/users/1');
         $this->assertEquals(200, $this->client->response->getStatusCode());
-        $this->dumpResponse();
     }
 
     public function testGetLeadsPagination()
