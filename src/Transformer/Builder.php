@@ -2,9 +2,9 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
@@ -20,6 +20,11 @@ class Builder implements BuilderInterface
     use RelationshipHelperTrait;
     use LinksTrait;
     use TypeTrait;
+
+    /**
+     * @var array
+     */
+    protected $relations;
 
     /**
      * @var Model
@@ -42,6 +47,41 @@ class Builder implements BuilderInterface
         $this->model = $model;
         $this->container = $container;
         $this->baseUri = $baseUri;
+
+        $this->setRelations();
+    }
+
+    protected function setRelations()
+    {
+        $modelClass = get_class($this->model);
+        $skipMethods = get_class_methods(Model::class);
+        $modelMethods = get_class_methods($modelClass);
+        $childMethods = array_diff($modelMethods, $skipMethods);
+
+        foreach (class_uses($modelClass) as $modelTrait) {
+            $childMethods = array_diff($childMethods, get_class_methods($modelTrait));
+        }
+
+        foreach ($childMethods as $methodName) {
+            if (substr($methodName, -9) == 'Attribute') {
+                continue;
+            }
+
+            if (substr($methodName, 0, 5) == 'scope') {
+                continue;
+            }
+
+            $reflection = new \ReflectionMethod($this->model, $methodName);
+            if ($reflection->getNumberOfParameters() != 0) {
+                continue;
+            }
+
+            $relation = $this->model->$methodName();
+
+            if ($relation instanceof Relation) {
+                $this->relations[$methodName] = $relation;
+            }
+        }
     }
 
     /**
@@ -67,7 +107,9 @@ class Builder implements BuilderInterface
     {
         $defaultIncludedRelationships = [];
 
-        foreach ($this->model->getDefaultIncludedRelationships() as $includedRelationship) {
+        $query = $this->model->newQueryWithoutScopes();
+
+        foreach (array_keys($query->getEagerLoads()) as $includedRelationship) {
             $defaultIncludedRelationships[] = StringHelper::slugCase($includedRelationship);
         }
 
@@ -79,23 +121,20 @@ class Builder implements BuilderInterface
      */
     public function getAttributesToHide()
     {
-        $hiddenAttributes = $this->getForeignKeys($this->model);
+        $hiddenAttributes = $this->getForeignKeys();
         $hiddenAttributes[] = $this->getIdKey();
 
         return $hiddenAttributes;
     }
 
     /**
-     * @param Model $model
      * @return \string[]
      */
-    protected function getForeignKeys(Model $model)
+    protected function getForeignKeys()
     {
         $foreignKeys = [];
 
-        foreach ($model->getVisibleRelationships() as $name) {
-            $relation = $this->getRelation($model, $name);
-
+        foreach ($this->relations as $name => $relation) {
             if ($relation instanceof BelongsTo) {
                 $foreignKeys[] = $relation->getForeignKey();
             }
@@ -109,32 +148,35 @@ class Builder implements BuilderInterface
      */
     public function getRelationshipsTransformer(ContainerInterface $container)
     {
-        return $this->getRelationshipsFromModel($this->model, $container);
-    }
-
-    /**
-     * @param Model $model
-     * @param ContainerInterface $container
-     * @returns callable[]
-     * @throws RelationshipNotExists
-     */
-    protected function getRelationshipsFromModel(Model $model, ContainerInterface $container)
-    {
         $relationships = [];
 
-        foreach ($model->getVisibleRelationships() as $name) {
-            $relation = $this->getRelation($model, $name);
+        foreach ($this->getVisibleRelations() as $name) {
             $keyName = StringHelper::slugCase($name);
 
             $relationships[$keyName] = $this->getRelationshipCallable(
                 $container,
-                $relation,
+                $this->relations[$name],
                 $name,
                 $keyName
             );
         }
 
         return $relationships;
+    }
+
+    protected function getVisibleRelations()
+    {
+        $values = array_keys($this->relations);
+
+        if (count($this->model->getVisible()) > 0) {
+            $values = array_intersect_key($values, array_flip($this->model->getVisible()));
+        }
+
+        if (count($this->model->getHidden()) > 0) {
+            $values = array_diff_key($values, array_flip($this->model->getHidden()));
+        }
+
+        return $values;
     }
 
     /**

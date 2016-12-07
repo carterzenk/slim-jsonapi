@@ -3,10 +3,10 @@
 namespace CarterZenk\JsonApi\Hydrator;
 
 use CarterZenk\JsonApi\Exceptions\RelatedResourceNotFound;
-use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
 use Illuminate\Database\Capsule\Manager;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -102,7 +102,7 @@ trait ModelHydratorTrait
     {
         $hydrators = [];
 
-        foreach ($model->getFillableRelationships() as $name) {
+        foreach ([] as $name) {
             $relation = $this->getRelation($model, $name);
 
             if ($this->isToOne($relation)) {

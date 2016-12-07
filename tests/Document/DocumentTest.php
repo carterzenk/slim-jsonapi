@@ -3,13 +3,11 @@
 namespace CarterZenk\Tests\JsonApi\Document;
 
 use CarterZenk\JsonApi\Document\DocumentFactory;
-use CarterZenk\JsonApi\Model\Model;
-use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use CarterZenk\Tests\JsonApi\Model\Contact;
+use Illuminate\Database\Eloquent\Model;
 use Slim\Http\Environment;
 use Slim\Http\Request;
-use Slim\Http\Uri;
 use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
 use WoohooLabs\Yin\JsonApi\Schema\JsonApi;
 

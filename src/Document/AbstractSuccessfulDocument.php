@@ -2,9 +2,10 @@
 
 namespace CarterZenk\JsonApi\Document;
 
-use CarterZenk\JsonApi\Model\Model;
+
 use CarterZenk\JsonApi\Transformer\Container;
 use CarterZenk\JsonApi\Transformer\LinksTrait;
+use Illuminate\Database\Eloquent\Model;
 use Psr\Http\Message\UriInterface;
 use WoohooLabs\Yin\JsonApi\Document\AbstractDocument;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;

@@ -2,7 +2,7 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use CarterZenk\JsonApi\Model\Model;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Transformer\AbstractResourceTransformer;

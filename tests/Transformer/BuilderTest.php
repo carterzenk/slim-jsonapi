@@ -9,8 +9,10 @@ use CarterZenk\Tests\JsonApi\Model\Contact;
 use CarterZenk\Tests\JsonApi\Model\OrganizationUser;
 use CarterZenk\Tests\JsonApi\Model\User;
 
-class BuilderTest extends BaseTestCase {
-    private function getBuilder($modelClass) {
+class BuilderTest extends BaseTestCase
+{
+    private function getBuilder($modelClass)
+    {
         $baseUri = 'http://localhost:8000';
         $container = new Container($baseUri);
         $model = $modelClass::find(1);

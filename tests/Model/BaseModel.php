@@ -2,10 +2,9 @@
 
 namespace CarterZenk\Tests\JsonApi\Model;
 
-use CarterZenk\JsonApi\Model\Model;
-use CarterZenk\JsonApi\Model\ModelInterface;
+use Illuminate\Database\Eloquent\Model;
 
-abstract class BaseModel extends Model implements ModelInterface
+abstract class BaseModel extends Model
 {
     public $timestamps = false;
 }

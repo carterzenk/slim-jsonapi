@@ -2,7 +2,7 @@
 
 namespace CarterZenk\JsonApi\Document;
 
-use CarterZenk\JsonApi\Model\Model;
+use Illuminate\Database\Eloquent\Model;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 interface DocumentFactoryInterface

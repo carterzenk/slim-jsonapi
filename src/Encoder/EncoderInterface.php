@@ -2,7 +2,7 @@
 
 namespace CarterZenk\JsonApi\Encoder;
 
-use CarterZenk\JsonApi\Model\Model;
+use Illuminate\Database\Eloquent\Model;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
