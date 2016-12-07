@@ -2,7 +2,7 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
+use CarterZenk\JsonApi\Builder\AbstractBuilder;
 use CarterZenk\JsonApi\Model\StringHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,73 +15,28 @@ use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
-class Builder implements BuilderInterface
+class TransformerBuilder extends AbstractBuilder implements TransformerBuilderInterface
 {
-    use RelationshipHelperTrait;
     use LinksTrait;
     use TypeTrait;
 
     /**
-     * @var array
-     */
-    protected $relations;
-
-    /**
-     * @var Model
-     */
-    protected $model;
-
-    /**
      * @var ContainerInterface
      */
-    protected $container;
+    protected $transformerContainer;
 
     /**
      * TransformerBuilder constructor.
      * @param Model $model
-     * @param ContainerInterface $container
+     * @param ContainerInterface $transformerContainer
      * @param string $baseUri
      */
-    public function __construct(Model $model, ContainerInterface $container, $baseUri)
+    public function __construct(Model $model, ContainerInterface $transformerContainer, $baseUri)
     {
-        $this->model = $model;
-        $this->container = $container;
+        parent::__construct($model);
+
+        $this->transformerContainer = $transformerContainer;
         $this->baseUri = $baseUri;
-
-        $this->setRelations();
-    }
-
-    protected function setRelations()
-    {
-        $modelClass = get_class($this->model);
-        $skipMethods = get_class_methods(Model::class);
-        $modelMethods = get_class_methods($modelClass);
-        $childMethods = array_diff($modelMethods, $skipMethods);
-
-        foreach (class_uses($modelClass) as $modelTrait) {
-            $childMethods = array_diff($childMethods, get_class_methods($modelTrait));
-        }
-
-        foreach ($childMethods as $methodName) {
-            if (substr($methodName, -9) == 'Attribute') {
-                continue;
-            }
-
-            if (substr($methodName, 0, 5) == 'scope') {
-                continue;
-            }
-
-            $reflection = new \ReflectionMethod($this->model, $methodName);
-            if ($reflection->getNumberOfParameters() != 0) {
-                continue;
-            }
-
-            $relation = $this->model->$methodName();
-
-            if ($relation instanceof Relation) {
-                $this->relations[$methodName] = $relation;
-            }
-        }
     }
 
     /**
@@ -194,9 +149,9 @@ class Builder implements BuilderInterface
         $keyName
     ) {
         return function ($domainObject) use ($name, $keyName, $relation, $container) {
-            $primaryTransformer = $container->getTransformer($domainObject);
+            $primaryTransformer = $container->get($domainObject);
             $relatedModel = $relation->getRelated()->newInstance();
-            $relatedTransformer = $container->getTransformer($relatedModel);
+            $relatedTransformer = $container->get($relatedModel);
 
             if ($this->isToOne($relation)) {
                 $relationship = ToOneRelationship::create();

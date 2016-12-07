@@ -52,13 +52,7 @@ trait JsonApiTrait
      */
     public function getModel()
     {
-        $model = $this->getBuilder()->getModel();
-
-        if ($model instanceof Model) {
-            return $model;
-        } else {
-            throw $this->exceptionFactory->createInvalidDomainObjectException($model);
-        }
+        return $this->getBuilder()->getModel();
     }
 
     /**

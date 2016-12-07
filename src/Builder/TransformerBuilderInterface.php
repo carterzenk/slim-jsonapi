@@ -2,7 +2,7 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-interface BuilderInterface
+interface TransformerBuilderInterface
 {
     /**
      * This function should return the type to use with a model.

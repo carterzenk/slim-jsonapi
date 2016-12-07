@@ -18,7 +18,7 @@ class TransformerContainerTest extends BaseTestCase
         $contact = $this->getContact();
         $transformer = $container->getTransformer($contact);
 
-        $this->checkTransformer($transformer, $contact, 'lead');
+        $this->checkTransformer($transformer, $contact, 'contact');
     }
 
     public function testGetTransformerByToOneRelationship()
@@ -37,7 +37,7 @@ class TransformerContainerTest extends BaseTestCase
         $ownedContacts = $this->getUser()->ownedContacts;
         $transformer = $container->getTransformer($ownedContacts);
 
-        $this->checkTransformer($transformer, $ownedContacts, 'lead');
+        $this->checkTransformer($transformer, $ownedContacts, 'contact');
     }
 
     public function testGetTransformerByPaginator()
@@ -47,7 +47,7 @@ class TransformerContainerTest extends BaseTestCase
         $paginator = $this->getPaginator($ownedContacts);
         $transformer = $container->getTransformer($paginator);
 
-        $this->checkTransformer($transformer, $paginator, 'lead');
+        $this->checkTransformer($transformer, $paginator, 'contact');
     }
 
     private function getContainer()

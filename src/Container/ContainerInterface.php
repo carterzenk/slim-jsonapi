@@ -10,5 +10,5 @@ interface ContainerInterface
      * @param mixed $domainObject
      * @return ResourceTransformerInterface
      */
-    public function getTransformer($domainObject);
+    public function get($domainObject);
 }

@@ -32,13 +32,13 @@ class BuilderTest extends BaseTestCase
     public function testGetType()
     {
         $builder = $this->getBuilder(Contact::class);
-        $this->assertEquals('lead', $builder->getType());
+        $this->assertEquals('contact', $builder->getType());
 
         $builder = $this->getBuilder(OrganizationUser::class);
         $this->assertEquals('organization-user', $builder->getType());
 
         $builder = $this->getBuilderForNew(Contact::class);
-        $this->assertEquals('lead', $builder->getType());
+        $this->assertEquals('contact', $builder->getType());
     }
 
     public function testGetIdKey()

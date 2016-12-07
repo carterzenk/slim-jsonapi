@@ -6,7 +6,7 @@ use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Hydrator\AbstractHydrator;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
-class Hydrator extends AbstractHydrator implements HydratorInterface
+class ResourceHydrator extends AbstractHydrator implements HydratorInterface
 {
     use ModelHydratorTrait;
 
