@@ -11,19 +11,8 @@ class User extends BaseModel
         'password'
     ];
 
-    protected $fillable = [
-        'f_name',
-        'l_name',
-        'email',
-        'password',
-        'phone',
-        'phone_cell',
-        'phone_office',
-        'address',
-        'city',
-        'state',
-        'zip',
-        'timezone',
+    protected $guarded = [
+        'id',
         'created_at',
         'updated_at'
     ];

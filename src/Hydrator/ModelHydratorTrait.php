@@ -6,6 +6,7 @@ use CarterZenk\JsonApi\Exceptions\RelatedResourceNotFound;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -35,17 +36,62 @@ trait ModelHydratorTrait
      */
     public function getModelAttributeHydrator(Model $model)
     {
+        $fillable = $model->getFillable();
+
+        if (!empty($fillable)) {
+            return $this->getAttributeHydratorFromFillable($fillable);
+        } else {
+            return $this->getAttributeHydratorFromGuarded($model);
+        }
+    }
+
+
+    /**
+     * @param array $fillable
+     * @return callable[]
+     */
+    protected function getAttributeHydratorFromFillable(array $fillable)
+    {
         $hydrators = [];
 
-        foreach ($model->getFillable() as $fillableAttribute) {
-            $hydrators[$fillableAttribute] = function (Model $model, $attribute, $data, $attributeName) {
-                $model->setAttribute($attributeName, $attribute);
-                return $model;
-            };
+        foreach ($fillable as $fillableAttribute) {
+            $hydrators[$fillableAttribute] = $this->getAttributeHydratorCallable();
         }
 
         return $hydrators;
     }
+
+    /**
+     * @param Model $model
+     * @return callable[]
+     */
+    protected function getAttributeHydratorFromGuarded(Model $model)
+    {
+        $hydrators = [];
+
+        $table = $model->getTable();
+        $columns = Manager::schema()->getColumnListing($table);
+
+        foreach ($columns as $column) {
+            if ($model->isFillable($column)) {
+                $hydrators[$column] = $this->getAttributeHydratorCallable();
+            }
+        }
+
+        return $hydrators;
+    }
+
+    /**
+     * @return callable
+     */
+    protected function getAttributeHydratorCallable()
+    {
+        return function (Model $model, $attribute, $data, $attributeName) {
+            $model->setAttribute($attributeName, $attribute);
+            return $model;
+        };
+    }
+
 
     /**
      * @param Model $model
