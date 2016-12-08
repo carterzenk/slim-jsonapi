@@ -8,7 +8,6 @@ class Contact extends BaseModel
     const UPDATED_AT = 'updated_at';
 
     protected $table = 'leads';
-    protected $resourceType = 'lead';
 
     protected $guarded = [
         'id',

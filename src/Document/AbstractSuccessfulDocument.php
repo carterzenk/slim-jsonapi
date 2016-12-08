@@ -2,11 +2,10 @@
 
 namespace CarterZenk\JsonApi\Document;
 
-
 use CarterZenk\JsonApi\Transformer\Container;
-use CarterZenk\JsonApi\Transformer\LinksTrait;
+use CarterZenk\JsonApi\Transformer\LinksFactory;
+use CarterZenk\JsonApi\Transformer\LinksFactoryInterface;
 use Illuminate\Database\Eloquent\Model;
-use Psr\Http\Message\UriInterface;
 use WoohooLabs\Yin\JsonApi\Document\AbstractDocument;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
@@ -16,8 +15,6 @@ use WoohooLabs\Yin\JsonApi\Transformer\Transformation;
 
 abstract class AbstractSuccessfulDocument extends AbstractDocument
 {
-    use LinksTrait;
-
     /**
      * @var mixed
      */
@@ -39,14 +36,9 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     protected $request;
 
     /**
-     * @var string
+     * @var LinksFactoryInterface
      */
-    protected $path;
-
-    /**
-     * @var string|null
-     */
-    protected $baseUri;
+    protected $linksFactory;
 
     /**
      * @var string|null
@@ -68,11 +60,8 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
         $this->request = $request;
         $this->jsonApiVersion = $jsonApiVersion;
 
-        $uri = $request->getUri();
-        $this->path = $uri->getPath();
-        $this->setBaseUri($uri);
-
-        $this->container = new Container($this->baseUri);
+        $this->linksFactory = new LinksFactory($request->getUri());
+        $this->container = new Container($this->linksFactory);
     }
 
     /**
@@ -163,21 +152,6 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     private function initializeDocument($domainObject)
     {
         $this->domainObject = $domainObject;
-    }
-
-    /**
-     * @param UriInterface $uri
-     */
-    private function setBaseUri(UriInterface $uri)
-    {
-        $baseUri = $uri->getScheme().'://';
-        $baseUri .= $uri->getHost();
-
-        if (!empty($uri->getPort())) {
-            $baseUri .= ':'.$uri->getPort();
-        }
-
-        $this->baseUri = $baseUri;
     }
 
     /**

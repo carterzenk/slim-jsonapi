@@ -4,14 +4,11 @@ namespace CarterZenk\JsonApi\Transformer;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Transformer\AbstractResourceTransformer;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class ResourceTransformer extends AbstractResourceTransformer implements ResourceTransformerInterface
 {
-    use LinksTrait;
-
     /**
      * @var string
      */
@@ -26,11 +23,6 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
      * @var string
      */
     protected $idKey;
-
-    /**
-     * @var string
-     */
-    protected $baseUri;
 
     /**
      * @var string[]
@@ -48,29 +40,34 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
     protected $relationships;
 
     /**
+     * @var LinksFactoryInterface
+     */
+    protected $linksFactory;
+
+    /**
      * ResourceTransformer constructor.
      * @param string $type
      * @param string $idKey
-     * @param string|null $baseUri
      * @param array $hiddenAttributes
      * @param array $defaultIncludedRelationships
      * @param array $relationships
+     * @param LinksFactoryInterface $linksFactory
      */
     public function __construct(
         $type,
         $idKey,
-        $baseUri,
         array $hiddenAttributes,
         array $defaultIncludedRelationships,
-        array $relationships
+        array $relationships,
+        LinksFactoryInterface $linksFactory
     ) {
         $this->type = $type;
         $this->pluralType = Str::plural($type);
         $this->idKey = $idKey;
-        $this->baseUri = $baseUri;
         $this->hiddenAttributes = $hiddenAttributes;
         $this->defaultIncludedRelationships = $defaultIncludedRelationships;
         $this->relationships = $relationships;
+        $this->linksFactory = $linksFactory;
     }
 
     /**
@@ -102,12 +99,10 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
      */
     public function getLinks($domainObject)
     {
-        $links = $this->createLinks();
-
-        $resourceId = $this->getId($domainObject);
-        $links->setSelf(new Link('/'.$this->pluralType.'/'.$resourceId));
-
-        return $links;
+        return $this->linksFactory->createResourceLinks(
+            $this->pluralType,
+            $this->getId($domainObject)
+        );
     }
 
     /**

@@ -2,23 +2,31 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use CarterZenk\JsonApi\Builder\AbstractBuilder;
+use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
-use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\AbstractRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
-class TransformerBuilder extends AbstractBuilder implements TransformerBuilderInterface
+class TransformerBuilder implements TransformerBuilderInterface
 {
-    use LinksTrait;
+    use RelationshipHelperTrait;
     use TypeTrait;
+
+    /**
+     * @var Model
+     */
+    protected $model;
+
+    /**
+     * @var array
+     */
+    protected $relationMethods;
 
     /**
      * @var ContainerInterface
@@ -26,17 +34,26 @@ class TransformerBuilder extends AbstractBuilder implements TransformerBuilderIn
     protected $transformerContainer;
 
     /**
+     * @var LinksFactoryInterface
+     */
+    protected $linksFactory;
+
+    /**
      * TransformerBuilder constructor.
      * @param Model $model
      * @param ContainerInterface $transformerContainer
-     * @param string $baseUri
+     * @param LinksFactoryInterface $linksFactory
+     * @internal param string $baseUri
      */
-    public function __construct(Model $model, ContainerInterface $transformerContainer, $baseUri)
-    {
-        parent::__construct($model);
-
+    public function __construct(
+        Model $model,
+        ContainerInterface $transformerContainer,
+        LinksFactoryInterface $linksFactory
+    ) {
+        $this->model = $model;
         $this->transformerContainer = $transformerContainer;
-        $this->baseUri = $baseUri;
+        $this->linksFactory = $linksFactory;
+        $this->relationMethods = $this->getRelationMethods($model);
     }
 
     /**
@@ -89,7 +106,7 @@ class TransformerBuilder extends AbstractBuilder implements TransformerBuilderIn
     {
         $foreignKeys = [];
 
-        foreach ($this->relations as $name => $relation) {
+        foreach ($this->relationMethods as $name => $relation) {
             if ($relation instanceof BelongsTo) {
                 $foreignKeys[] = $relation->getForeignKey();
             }
@@ -110,7 +127,7 @@ class TransformerBuilder extends AbstractBuilder implements TransformerBuilderIn
 
             $relationships[$keyName] = $this->getRelationshipCallable(
                 $container,
-                $this->relations[$name],
+                $this->relationMethods[$name],
                 $name,
                 $keyName
             );
@@ -121,7 +138,7 @@ class TransformerBuilder extends AbstractBuilder implements TransformerBuilderIn
 
     protected function getVisibleRelations()
     {
-        $values = array_keys($this->relations);
+        $values = array_keys($this->relationMethods);
 
         if (count($this->model->getVisible()) > 0) {
             $values = array_intersect_key($values, array_flip($this->model->getVisible()));
@@ -153,19 +170,17 @@ class TransformerBuilder extends AbstractBuilder implements TransformerBuilderIn
             $relatedModel = $relation->getRelated()->newInstance();
             $relatedTransformer = $container->get($relatedModel);
 
-            if ($this->isToOne($relation)) {
-                $relationship = ToOneRelationship::create();
-            } elseif ($this->isToMany($relation)) {
-                $relationship = ToManyRelationship::create();
-            }
+            $relationship = $this->createRelationshipFromRelation($relation);
 
-            $this->setRelationshipLinks(
-                $relationship,
-                $primaryTransformer,
+            // Links
+            $links = $this->linksFactory->createRelationshipLinks(
+                $keyName,
                 $domainObject,
-                $keyName
+                $primaryTransformer
             );
+            $relationship->setLinks($links);
 
+            // Data
             $this->setRelationshipData(
                 $relationship,
                 $relatedTransformer,
@@ -177,30 +192,17 @@ class TransformerBuilder extends AbstractBuilder implements TransformerBuilderIn
         };
     }
 
-    /**
-     * @param AbstractRelationship $relationship
-     * @param ResourceTransformerInterface $transformer
-     * @param mixed $domainObject
-     * @param string $keyName
-     */
-    private function setRelationshipLinks(
-        AbstractRelationship &$relationship,
-        ResourceTransformerInterface $transformer,
-        $domainObject,
-        $keyName
-    ) {
-        $pluralType = Str::plural($transformer->getType($domainObject));
-        $modelId = $transformer->getId($domainObject);
-
-        $links = $this->createLinks();
-
-        $selfLink = new Link('/'.$pluralType.'/'.$modelId.'/relationships/'.$keyName);
-        $links->setSelf($selfLink);
-
-        $relatedLink = new Link('/'.$pluralType.'/'.$modelId.'/'.$keyName);
-        $links->setRelated($relatedLink);
-
-        $relationship->setLinks($links);
+    private function createRelationshipFromRelation(Relation $relation)
+    {
+        if ($this->isToOne($relation)) {
+            return ToOneRelationship::create();
+        } elseif ($this->isToMany($relation)) {
+            return ToManyRelationship::create();
+        } else {
+            throw new \InvalidArgumentException(
+                'Relation of type '.get_class($relation).' is not supported.'
+            );
+        }
     }
 
     /**
