@@ -10,6 +10,7 @@ use CarterZenk\JsonApi\Encoder\JsonApiEncoder;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactory;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
 use CarterZenk\JsonApi\Hydrator\Hydrator;
+use CarterZenk\JsonApi\Hydrator\ResourceHydrator;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use CarterZenk\JsonApi\Strategy\Filtering\ColumnEqualsValue;
@@ -103,7 +104,7 @@ class SlimInstance
         };
 
         $container[HydratorInterface::class] = function (ContainerInterface $container) {
-            return new Hydrator();
+            return new ResourceHydrator();
         };
 
         $container[SerializerInterface::class] = function (ContainerInterface $container) {
@@ -157,17 +158,17 @@ class SlimInstance
     private static function setRoutes(App $app)
     {
         $app->get(
-            '/leads',
+            '/contacts',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:indexResourceAction'
         );
 
         $app->get(
-            '/leads/{id}',
+            '/contacts/{id}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:findResourceAction'
         );
 
         $app->get(
-            '/leads/{id}/relationships/{relationship}',
+            '/contacts/{id}/relationships/{relationship}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:findRelationshipAction'
         );
 
@@ -187,22 +188,22 @@ class SlimInstance
         );
 
         $app->delete(
-            '/leads/{id}',
+            '/contacts/{id}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:deleteResourceAction'
         );
 
         $app->post(
-            '/leads',
+            '/contacts',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:createResourceAction'
         );
 
         $app->patch(
-            '/leads/{id}/relationships/{relationship}',
+            '/contacts/{id}/relationships/{relationship}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:updateRelationshipAction'
         );
 
         $app->patch(
-            '/leads/{id}',
+            '/contacts/{id}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:updateResourceAction'
         );
 

@@ -5,9 +5,9 @@ namespace CarterZenk\JsonApi\Transformer;
 use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Pimple\Container;
+use Pimple\Container as PimpleContainer;
 
-class TransformerContainer extends Container
+class Container extends PimpleContainer implements ContainerInterface
 {
     /**
      * @var LinksFactoryInterface
@@ -64,7 +64,7 @@ class TransformerContainer extends Container
         return function ($container) use ($modelClass) {
             $model = new $modelClass();
 
-            $builder = new TransformerBuilder($model, $container, $this->linksFactory);
+            $builder = new Builder($model, $this->linksFactory);
 
             return new ResourceTransformer(
                 $builder->getType(),

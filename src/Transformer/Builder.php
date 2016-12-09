@@ -13,7 +13,7 @@ use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
-class TransformerBuilder implements TransformerBuilderInterface
+class Builder implements BuilderInterface
 {
     use RelationshipHelperTrait;
     use TypeTrait;
@@ -29,11 +29,6 @@ class TransformerBuilder implements TransformerBuilderInterface
     protected $relationMethods;
 
     /**
-     * @var ContainerInterface
-     */
-    protected $transformerContainer;
-
-    /**
      * @var LinksFactoryInterface
      */
     protected $linksFactory;
@@ -41,17 +36,14 @@ class TransformerBuilder implements TransformerBuilderInterface
     /**
      * TransformerBuilder constructor.
      * @param Model $model
-     * @param ContainerInterface $transformerContainer
      * @param LinksFactoryInterface $linksFactory
      * @internal param string $baseUri
      */
     public function __construct(
         Model $model,
-        ContainerInterface $transformerContainer,
         LinksFactoryInterface $linksFactory
     ) {
         $this->model = $model;
-        $this->transformerContainer = $transformerContainer;
         $this->linksFactory = $linksFactory;
         $this->relationMethods = $this->getRelationMethods($model);
     }
