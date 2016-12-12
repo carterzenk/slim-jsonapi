@@ -24,9 +24,9 @@ class Builder implements BuilderInterface
     protected $model;
 
     /**
-     * @var array
+     * @var Relation[]
      */
-    protected $relationMethods;
+    protected $relations;
 
     /**
      * @var LinksFactoryInterface
@@ -45,7 +45,7 @@ class Builder implements BuilderInterface
     ) {
         $this->model = $model;
         $this->linksFactory = $linksFactory;
-        $this->relationMethods = $this->getRelationMethods($model);
+        $this->relations = $this->getRelations($model);
     }
 
     /**
@@ -98,7 +98,7 @@ class Builder implements BuilderInterface
     {
         $foreignKeys = [];
 
-        foreach ($this->relationMethods as $name => $relation) {
+        foreach ($this->relations as $name => $relation) {
             if ($relation instanceof BelongsTo) {
                 $foreignKeys[] = $relation->getForeignKey();
             }
@@ -119,7 +119,7 @@ class Builder implements BuilderInterface
 
             $relationships[$keyName] = $this->getRelationshipCallable(
                 $container,
-                $this->relationMethods[$name],
+                $this->relations[$name],
                 $name,
                 $keyName
             );
@@ -128,9 +128,12 @@ class Builder implements BuilderInterface
         return $relationships;
     }
 
+    /**
+     * @return array
+     */
     protected function getVisibleRelations()
     {
-        $values = array_keys($this->relationMethods);
+        $values = array_keys($this->relations);
 
         if (count($this->model->getVisible()) > 0) {
             $values = array_intersect_key($values, array_flip($this->model->getVisible()));
@@ -184,38 +187,38 @@ class Builder implements BuilderInterface
         };
     }
 
+    /**
+     * @param Relation $relation
+     * @return AbstractRelationship
+     */
     private function createRelationshipFromRelation(Relation $relation)
     {
         if ($this->isToOne($relation)) {
             return ToOneRelationship::create();
-        } elseif ($this->isToMany($relation)) {
-            return ToManyRelationship::create();
         } else {
-            throw new \InvalidArgumentException(
-                'Relation of type '.get_class($relation).' is not supported.'
-            );
+            return ToManyRelationship::create();
         }
     }
 
     /**
      * @param AbstractRelationship $relationship
      * @param ResourceTransformerInterface $transformer
-     * @param mixed $domainObject
+     * @param Model $model
      * @param string $name
      */
     private function setRelationshipData(
         AbstractRelationship &$relationship,
         ResourceTransformerInterface $transformer,
-        $domainObject,
+        Model $model,
         $name
     ) {
-        if ($this->isRelationshipLoaded($domainObject, $name)) {
-            $data = $domainObject->$name;
+        if ($model->relationLoaded($name)) {
+            $data = $model->$name;
 
             $relationship->setData($data, $transformer);
         } else {
-            $dataCallable = function () use ($domainObject, $name) {
-                return $domainObject->$name;
+            $dataCallable = function () use ($model, $name) {
+                return $model->$name;
             };
 
             $relationship->setDataAsCallable($dataCallable, $transformer);

@@ -2,8 +2,13 @@
 
 namespace CarterZenk\Tests\JsonApi\Model;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Contact extends BaseModel
 {
+    use SoftDeletes;
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -27,15 +32,11 @@ class Contact extends BaseModel
         'state',
         'zip',
         'birthday',
-        'invalid'
-    ];
-
-    protected $with = [
+        'invalid',
         'assignee'
     ];
 
-    protected $visibleRelationships = [
-        'owner',
+    protected $with = [
         'assignee'
     ];
 
@@ -51,5 +52,25 @@ class Contact extends BaseModel
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_id', 'id');
+    }
+
+    public function setFirstNameAttribute($firstName)
+    {
+        $this->f_name = $firstName;
+    }
+
+    public function scopeZip(Builder $query)
+    {
+        return $query->where('zip', '11111');
+    }
+
+    public function someOtherMethod($something)
+    {
+        return $something;
+    }
+
+    protected function someOtherProtectedMethod()
+    {
+        return null;
     }
 }

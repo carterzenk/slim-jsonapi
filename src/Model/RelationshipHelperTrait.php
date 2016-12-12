@@ -12,36 +12,66 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 trait RelationshipHelperTrait
 {
     /**
+     * This function should return an array of relation methods with each
+     * key as the method name, and the returned relation as a value.
+     *
      * @param Model $model
-     * @return array
+     * @return Relation[]
      */
-    protected function getRelationMethods(Model $model)
+    protected function getRelations(Model $model)
     {
-        $relations = [];
-
-        $modelClass = get_class($model);
-        $skipMethods = get_class_methods(Model::class);
-        $modelMethods = get_class_methods($modelClass);
-        $childMethods = array_diff($modelMethods, $skipMethods);
-
-        foreach (class_uses($modelClass) as $modelTrait) {
-            $childMethods = array_diff($childMethods, get_class_methods($modelTrait));
+        if (method_exists($model, 'getRelationMethods')) {
+            $relationMethods = $model->getRelationMethods();
+        } else {
+            $relationMethods = $this->getRelationMethodsFromChildMethods($model);
         }
 
-        foreach ($childMethods as $methodName) {
+        return $this->getRelationsFromMethods($model, $relationMethods);
+    }
+
+    /**
+     * @param Model $model
+     * @return string[]
+     */
+    private function getRelationMethodsFromChildMethods(Model $model)
+    {
+        $relationMethods = [];
+
+        foreach ($this->getChildMethods($model) as $methodName) {
+            // Filter out attribute getters/setters
             if (substr($methodName, -9) == 'Attribute') {
                 continue;
             }
 
+            // Filter out scope methods
             if (substr($methodName, 0, 5) == 'scope') {
                 continue;
             }
 
             $reflection = new \ReflectionMethod($model, $methodName);
+
+            // Filter out methods that use parameters
             if ($reflection->getNumberOfParameters() != 0) {
                 continue;
             }
 
+            $relationMethods[] = $methodName;
+        }
+
+        return $relationMethods;
+    }
+
+    /**
+     * @param Model $model
+     * @param array $methodNames
+     * @return Relation[]
+     */
+    private function getRelationsFromMethods(Model $model, array $methodNames)
+    {
+        $relations = [];
+
+        foreach ($methodNames as $methodName)
+        {
             $relation = $model->$methodName();
 
             if ($relation instanceof Relation) {
@@ -53,41 +83,27 @@ trait RelationshipHelperTrait
     }
 
     /**
+     * This function should return methods defined in the child model class.
+     *
      * @param Model $model
-     * @param string $name
-     * @return bool
+     * @return string[]
      */
-    protected function isRelationshipLoaded(Model $model, $name)
+    private function getChildMethods(Model $model)
     {
-        return $model->relationLoaded($name);
-    }
+        $modelClass = get_class($model);
 
+        // Filter out methods defined in Model class.
+        $childMethods = array_diff(
+            get_class_methods($modelClass),
+            get_class_methods(Model::class)
+        );
 
-    /**
-     * @param mixed $object
-     * @return bool
-     */
-    protected function isRelation($object)
-    {
-        return $object instanceof Relation;
-    }
+        // Filter out trait methods (scopes, soft deletes, etc).
+        foreach (class_uses($modelClass) as $modelTrait) {
+            $childMethods = array_diff($childMethods, get_class_methods($modelTrait));
+        }
 
-    /**
-     * @param Relation $relation
-     * @return bool
-     */
-    protected function isBelongsTo(Relation $relation)
-    {
-        return $relation instanceof BelongsTo;
-    }
-
-    /**
-     * @param Relation $relation
-     * @return bool
-     */
-    protected function isHasOne(Relation $relation)
-    {
-        return $relation instanceof HasOne;
+        return $childMethods;
     }
 
     /**

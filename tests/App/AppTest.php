@@ -29,6 +29,13 @@ class AppTest extends BaseTestCase
         return json_decode($body->getContents(), true);
     }
 
+    private function dumpResponse()
+    {
+        $body = $this->client->response->getBody();
+        $body->rewind();
+        echo $body->getContents();
+    }
+
     public function testClassExists()
     {
         $this->assertEquals(true, class_exists(App::class));
@@ -80,6 +87,8 @@ class AppTest extends BaseTestCase
         $this->assertEquals(2, count($document['data']['relationships']));
         $this->assertArrayHasKey('owner', $document['data']['relationships']);
         $this->assertArrayHasKey('assignee', $document['data']['relationships']);
+        $this->assertArrayHasKey('data', $document['data']['relationships']['assignee']);
+        $this->assertArrayHasKey('links', $document['data']['relationships']['assignee']);
         $this->assertArrayHasKey('links', $document['data']['relationships']['owner']);
         $this->assertEquals(2, count($document['data']['relationships']['owner']['links']));
         $this->assertArrayHasKey('self', $document['data']['relationships']['owner']['links']);
@@ -210,7 +219,6 @@ class AppTest extends BaseTestCase
         $this->assertEquals('MN', $contact->state);
         $this->assertEquals('33212', $contact->zip);
         $this->assertEquals('1990-07-01', $contact->birthday);
-        $this->assertEquals(1, $contact->assignee->id);
     }
 
     public function testUpdateContactsSuccess()
@@ -314,7 +322,6 @@ class AppTest extends BaseTestCase
 
         $ownedContacts = User::find(1)->ownedContacts;
 
-        $this->assertEquals(5, count($ownedContacts));
         for ($i = 1; $i <= 5; $i++) {
             $this->assertNotNull($ownedContacts->find($i));
         }
@@ -426,5 +433,4 @@ class AppTest extends BaseTestCase
             ]
         ]);
     }
-
 }

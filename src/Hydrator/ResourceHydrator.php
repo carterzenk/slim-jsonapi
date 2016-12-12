@@ -9,6 +9,7 @@ use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Hydrator\AbstractHydrator;
@@ -95,21 +96,28 @@ class ResourceHydrator extends AbstractHydrator implements HydratorInterface
         $fillable = $domainObject->getFillable();
 
         if (!empty($fillable)) {
-            return $this->getAttributeHydratorFromFillable($fillable);
+            return $this->getAttributeHydratorFromFillable($domainObject, $fillable);
         } else {
             return $this->getAttributeHydratorFromGuarded($domainObject);
         }
     }
 
     /**
+     * @param Model $model
      * @param array $fillable
      * @return callable[]
      */
-    protected function getAttributeHydratorFromFillable(array $fillable)
+    protected function getAttributeHydratorFromFillable(Model $model, array $fillable)
     {
         $hydrators = [];
 
         foreach ($fillable as $fillableAttribute) {
+            // If the attribute is a relation method, do not add it to
+            // the attribute hydrators.
+            if (method_exists($model, $fillableAttribute)) {
+                continue;
+            }
+
             $hydrators[$fillableAttribute] = $this->getAttributeHydratorCallable();
         }
 
@@ -155,7 +163,7 @@ class ResourceHydrator extends AbstractHydrator implements HydratorInterface
     {
         $hydrators = [];
 
-        foreach ($this->getRelationMethods($domainObject) as $name => $relation) {
+        foreach ($this->getRelations($domainObject) as $name => $relation) {
             if (!$domainObject->isFillable($name)) {
                 continue;
             }
@@ -197,7 +205,7 @@ class ResourceHydrator extends AbstractHydrator implements HydratorInterface
                     ->newQuery()
                     ->findOrFail($resourceIdentifier->getId());
 
-                if ($this->isHasOne($relation)) {
+                if ($relation instanceof HasOne) {
                     $model->$name()->save($relatedModel);
                 } else {
                     $model->$name()->associate($relatedModel);
