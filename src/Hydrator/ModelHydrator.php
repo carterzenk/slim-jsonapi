@@ -2,6 +2,7 @@
 
 namespace CarterZenk\JsonApi\Hydrator;
 
+use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -13,6 +14,14 @@ use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInterface
 {
     use TypeTrait;
+    use RelationshipHelperTrait;
+
+    protected $fillableRelationships;
+
+    public function __construct(array $fillableRelationships = [])
+    {
+        $this->fillableRelationships = $fillableRelationships;
+    }
 
     /**
      * @param RequestInterface $request
@@ -106,12 +115,18 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
             return $domainObject;
         }
 
+        $modelRelationships = $this->getRelations($domainObject);
+
         foreach ($data['relationships'] as $relationshipKey => $relationship) {
-            // TODO: Implement relationship hydration.
 
         }
 
         return $domainObject;
+    }
+
+    private function isHydratable($relationship)
+    {
+        return in_array($relationship, $this->hydratableRelationships);
     }
 
     /**
