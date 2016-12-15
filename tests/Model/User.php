@@ -14,18 +14,19 @@ class User extends BaseModel
     protected $guarded = [
         'id',
         'created_at',
-        'updated_at'
-    ];
-
-    protected $fillableRelationships = [
-        'ownedContacts'
-    ];
-
-    protected $visibleRelationships = [
-        'ownedContacts',
+        'updated_at',
         'assignedContacts',
         'organizations'
     ];
+
+    public function getRelationMethods()
+    {
+        return [
+            'ownedContacts',
+            'assignedContacts',
+            'organizations'
+        ];
+    }
 
     public function ownedContacts()
     {

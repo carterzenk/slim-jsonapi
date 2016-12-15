@@ -6,9 +6,9 @@ use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactory;
-use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Model;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 class JsonApiEncoder extends EloquentEncoder

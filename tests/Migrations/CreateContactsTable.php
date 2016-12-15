@@ -33,6 +33,7 @@ class CreateContactsTable extends Migration
             $table->date('birthday')->nullable();
             $table->dateTime('created_at')->nullable();
             $table->dateTime('updated_at')->nullable();
+            $table->dateTime('deleted_at')->nullable();
         });
 
         $faker = Factory::create();

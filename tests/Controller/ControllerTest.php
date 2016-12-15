@@ -19,11 +19,4 @@ class ControllerTest extends BaseTestCase
         $this->assertEquals(true, class_exists(JsonApiController::class));
         $this->assertEquals(true, class_exists(ContactsController::class));
     }
-
-    public function testInvalidModelThrowsError()
-    {
-        $this->expectException(InvalidDomainObjectException::class);
-        $controller = $this->app->getContainer()->get('\CarterZenk\Tests\JsonApi\Controller\EloquentModelController');
-        $controller->getModel();
-    }
 }

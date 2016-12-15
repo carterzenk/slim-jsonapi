@@ -27,11 +27,9 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
      */
     public function getLinks()
     {
-        $links = $this->createLinks();
-        $links->setSelf(new Link($this->path));
-        $links->setPagination($this->path, $this->domainObject);
-
-        return $links;
+        return $this->linksFactory->createDocumentLinksWithPagination(
+            $this->domainObject
+        );
     }
 
     /**
@@ -63,7 +61,7 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
-        $transformer = $this->container->getTransformer($this->model);
+        $transformer = $this->container->get($this->model);
         foreach ($this->getItems() as $item) {
             $transformation->data->addPrimaryResource($transformer->transformToResource($transformation, $item));
         }
@@ -81,7 +79,7 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
             return [];
         }
 
-        $transformer = $this->container->getTransformer($this->model);
+        $transformer = $this->container->get($this->model);
         $result = [];
 
         foreach ($this->getItems() as $item) {

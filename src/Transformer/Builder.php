@@ -2,14 +2,12 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str;
 use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
-use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\AbstractRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
 use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
@@ -18,7 +16,6 @@ use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 class Builder implements BuilderInterface
 {
     use RelationshipHelperTrait;
-    use LinksTrait;
     use TypeTrait;
 
     /**
@@ -27,21 +24,28 @@ class Builder implements BuilderInterface
     protected $model;
 
     /**
-     * @var ContainerInterface
+     * @var Relation[]
      */
-    protected $container;
+    protected $relations;
+
+    /**
+     * @var LinksFactoryInterface
+     */
+    protected $linksFactory;
 
     /**
      * TransformerBuilder constructor.
      * @param Model $model
-     * @param ContainerInterface $container
-     * @param string $baseUri
+     * @param LinksFactoryInterface $linksFactory
+     * @internal param string $baseUri
      */
-    public function __construct(Model $model, ContainerInterface $container, $baseUri)
-    {
+    public function __construct(
+        Model $model,
+        LinksFactoryInterface $linksFactory
+    ) {
         $this->model = $model;
-        $this->container = $container;
-        $this->baseUri = $baseUri;
+        $this->linksFactory = $linksFactory;
+        $this->relations = $this->getRelations($model);
     }
 
     /**
@@ -67,7 +71,9 @@ class Builder implements BuilderInterface
     {
         $defaultIncludedRelationships = [];
 
-        foreach ($this->model->getDefaultIncludedRelationships() as $includedRelationship) {
+        $query = $this->model->newQueryWithoutScopes();
+
+        foreach (array_keys($query->getEagerLoads()) as $includedRelationship) {
             $defaultIncludedRelationships[] = StringHelper::slugCase($includedRelationship);
         }
 
@@ -79,23 +85,20 @@ class Builder implements BuilderInterface
      */
     public function getAttributesToHide()
     {
-        $hiddenAttributes = $this->getForeignKeys($this->model);
+        $hiddenAttributes = $this->getForeignKeys();
         $hiddenAttributes[] = $this->getIdKey();
 
         return $hiddenAttributes;
     }
 
     /**
-     * @param Model $model
      * @return \string[]
      */
-    protected function getForeignKeys(Model $model)
+    protected function getForeignKeys()
     {
         $foreignKeys = [];
 
-        foreach ($model->getVisibleRelationships() as $name) {
-            $relation = $this->getRelation($model, $name);
-
+        foreach ($this->relations as $name => $relation) {
             if ($relation instanceof BelongsTo) {
                 $foreignKeys[] = $relation->getForeignKey();
             }
@@ -109,32 +112,38 @@ class Builder implements BuilderInterface
      */
     public function getRelationshipsTransformer(ContainerInterface $container)
     {
-        return $this->getRelationshipsFromModel($this->model, $container);
-    }
-
-    /**
-     * @param Model $model
-     * @param ContainerInterface $container
-     * @returns callable[]
-     * @throws RelationshipNotExists
-     */
-    protected function getRelationshipsFromModel(Model $model, ContainerInterface $container)
-    {
         $relationships = [];
 
-        foreach ($model->getVisibleRelationships() as $name) {
-            $relation = $this->getRelation($model, $name);
+        foreach ($this->getVisibleRelations() as $name) {
             $keyName = StringHelper::slugCase($name);
 
             $relationships[$keyName] = $this->getRelationshipCallable(
                 $container,
-                $relation,
+                $this->relations[$name],
                 $name,
                 $keyName
             );
         }
 
         return $relationships;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getVisibleRelations()
+    {
+        $values = array_keys($this->relations);
+
+        if (count($this->model->getVisible()) > 0) {
+            $values = array_intersect_key($values, array_flip($this->model->getVisible()));
+        }
+
+        if (count($this->model->getHidden()) > 0) {
+            $values = array_diff_key($values, array_flip($this->model->getHidden()));
+        }
+
+        return $values;
     }
 
     /**
@@ -152,23 +161,21 @@ class Builder implements BuilderInterface
         $keyName
     ) {
         return function ($domainObject) use ($name, $keyName, $relation, $container) {
-            $primaryTransformer = $container->getTransformer($domainObject);
+            $primaryTransformer = $container->get($domainObject);
             $relatedModel = $relation->getRelated()->newInstance();
-            $relatedTransformer = $container->getTransformer($relatedModel);
+            $relatedTransformer = $container->get($relatedModel);
 
-            if ($this->isToOne($relation)) {
-                $relationship = ToOneRelationship::create();
-            } elseif ($this->isToMany($relation)) {
-                $relationship = ToManyRelationship::create();
-            }
+            $relationship = $this->createRelationshipFromRelation($relation);
 
-            $this->setRelationshipLinks(
-                $relationship,
-                $primaryTransformer,
+            // Links
+            $links = $this->linksFactory->createRelationshipLinks(
+                $keyName,
                 $domainObject,
-                $keyName
+                $primaryTransformer
             );
+            $relationship->setLinks($links);
 
+            // Data
             $this->setRelationshipData(
                 $relationship,
                 $relatedTransformer,
@@ -181,50 +188,37 @@ class Builder implements BuilderInterface
     }
 
     /**
-     * @param AbstractRelationship $relationship
-     * @param ResourceTransformerInterface $transformer
-     * @param mixed $domainObject
-     * @param string $keyName
+     * @param Relation $relation
+     * @return AbstractRelationship
      */
-    private function setRelationshipLinks(
-        AbstractRelationship &$relationship,
-        ResourceTransformerInterface $transformer,
-        $domainObject,
-        $keyName
-    ) {
-        $pluralType = Str::plural($transformer->getType($domainObject));
-        $modelId = $transformer->getId($domainObject);
-
-        $links = $this->createLinks();
-
-        $selfLink = new Link('/'.$pluralType.'/'.$modelId.'/relationships/'.$keyName);
-        $links->setSelf($selfLink);
-
-        $relatedLink = new Link('/'.$pluralType.'/'.$modelId.'/'.$keyName);
-        $links->setRelated($relatedLink);
-
-        $relationship->setLinks($links);
+    private function createRelationshipFromRelation(Relation $relation)
+    {
+        if ($this->isToOne($relation)) {
+            return ToOneRelationship::create();
+        } else {
+            return ToManyRelationship::create();
+        }
     }
 
     /**
      * @param AbstractRelationship $relationship
      * @param ResourceTransformerInterface $transformer
-     * @param mixed $domainObject
+     * @param Model $model
      * @param string $name
      */
     private function setRelationshipData(
         AbstractRelationship &$relationship,
         ResourceTransformerInterface $transformer,
-        $domainObject,
+        Model $model,
         $name
     ) {
-        if ($this->isRelationshipLoaded($domainObject, $name)) {
-            $data = $domainObject->$name;
+        if ($model->relationLoaded($name)) {
+            $data = $model->$name;
 
             $relationship->setData($data, $transformer);
         } else {
-            $dataCallable = function () use ($domainObject, $name) {
-                return $domainObject->$name;
+            $dataCallable = function () use ($model, $name) {
+                return $model->$name;
             };
 
             $relationship->setDataAsCallable($dataCallable, $transformer);

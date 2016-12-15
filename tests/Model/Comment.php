@@ -4,12 +4,21 @@ namespace CarterZenk\Tests\JsonApi\Model;
 
 class Comment extends BaseModel
 {
-    protected $visibleRelationships = [
-        'someInsaneMethod',
+    protected $fillable = [
+        'name',
+        'id',
+        'someInsaneMethod'
     ];
+
+    public function getRelationMethods()
+    {
+        return [
+            'someInsaneMethod'
+        ];
+    }
 
     public function someInsaneMethod()
     {
-        return [];
+        $this->morphedByMany(Contact::class, 'contacts');
     }
 }

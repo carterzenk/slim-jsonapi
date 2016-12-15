@@ -36,7 +36,8 @@ class CreateUsersTable extends Migration
         $faker = Factory::create();
 
         for ($i = 0; $i < 5; $i++) {
-            User::create([
+            $user = new User();
+            $user->setRawAttributes([
                 'f_name' => $faker->firstName,
                 'l_name' => $faker->lastName,
                 'email' => $faker->email,
@@ -52,6 +53,8 @@ class CreateUsersTable extends Migration
                 'created_at' => $faker->dateTimeBetween('-3 years', 'now'),
                 'updated_at' => $faker->dateTimeBetween('-3 years', 'now')
             ]);
+
+            $user->save();
         }
     }
 

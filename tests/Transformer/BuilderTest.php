@@ -4,39 +4,46 @@ namespace CarterZenk\Tests\JsonApi\Transformer;
 
 use CarterZenk\JsonApi\Transformer\Builder;
 use CarterZenk\JsonApi\Transformer\Container;
+use CarterZenk\JsonApi\Transformer\LinksFactory;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
+use CarterZenk\Tests\JsonApi\Model\Comment;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 use CarterZenk\Tests\JsonApi\Model\OrganizationUser;
 use CarterZenk\Tests\JsonApi\Model\User;
+use Slim\Http\Uri;
 
-class BuilderTest extends BaseTestCase {
-    private function getBuilder($modelClass) {
-        $baseUri = 'http://localhost:8000';
-        $container = new Container($baseUri);
+class BuilderTest extends BaseTestCase
+{
+    private function getBuilder($modelClass)
+    {
+        $uri = new Uri('http', 'localhost', 8000);
+        $linksFactory = new LinksFactory($uri);
+        $container = new Container($linksFactory);
         $model = $modelClass::find(1);
 
-        return new Builder($model, $container, $baseUri);
+        return new Builder($model, $linksFactory);
     }
 
     private function getBuilderForNew($modelClass)
     {
-        $baseUri = 'http://localhost:8000';
-        $container = new Container($baseUri);
+        $uri = new Uri('http', 'localhost', 8000);
+        $linksFactory = new LinksFactory($uri);
+        $container = new Container($linksFactory);
         $model = new $modelClass();
 
-        return new Builder($model, $container, $baseUri);
+        return new Builder($model, $linksFactory);
     }
 
     public function testGetType()
     {
         $builder = $this->getBuilder(Contact::class);
-        $this->assertEquals('lead', $builder->getType());
+        $this->assertEquals('contact', $builder->getType());
 
         $builder = $this->getBuilder(OrganizationUser::class);
         $this->assertEquals('organization-user', $builder->getType());
 
         $builder = $this->getBuilderForNew(Contact::class);
-        $this->assertEquals('lead', $builder->getType());
+        $this->assertEquals('contact', $builder->getType());
     }
 
     public function testGetIdKey()
@@ -74,17 +81,17 @@ class BuilderTest extends BaseTestCase {
     public function testGetRelationshipsTransformer()
     {
         $expectedKeys = ['owner', 'assignee'];
-        $baseUri = 'http://localhost:8000';
-
-        $container = new Container($baseUri);
+        $uri = new Uri('http', 'localhost', 8000);
+        $linksFactory = new LinksFactory($uri);
+        $container = new Container($linksFactory);
 
         $model = Contact::find(1);
-        $builder = new Builder($model, $container, $baseUri);
+        $builder = new Builder($model, $linksFactory);
         $relationshipsTransformer = $builder->getRelationshipsTransformer($container);
         $this->checkTransformer($expectedKeys, $relationshipsTransformer);
 
         $model = new Contact();
-        $builder = new Builder($model, $container, $baseUri);
+        $builder = new Builder($model, $linksFactory);
 
         $relationshipsTransformer = $builder->getRelationshipsTransformer($container);
         $this->checkTransformer($expectedKeys, $relationshipsTransformer);

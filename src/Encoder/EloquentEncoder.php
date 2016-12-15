@@ -3,9 +3,9 @@
 namespace CarterZenk\JsonApi\Encoder;
 
 use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
-use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Model;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 

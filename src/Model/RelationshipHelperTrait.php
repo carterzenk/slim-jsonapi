@@ -2,75 +2,108 @@
 
 namespace CarterZenk\JsonApi\Model;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
 
 trait RelationshipHelperTrait
 {
     /**
+     * This function should return an array of relation methods with each
+     * key as the method name, and the returned relation as a value.
+     *
      * @param Model $model
-     * @param string $name
-     * @return Relation
-     * @throws RelationshipNotExists
+     * @return Relation[]
      */
-    protected function getRelation(Model $model, $name)
+    protected function getRelations(Model $model)
     {
-        if (!method_exists($model, $name)) {
-            throw $this->createRelationshipNotExistsException($name);
+        if (method_exists($model, 'getRelationMethods')) {
+            $relationMethods = $model->getRelationMethods();
+        } else {
+            $relationMethods = $this->getRelationMethodsFromChildMethods($model);
         }
 
-        $relation = $model->$name();
+        return $this->getRelationsFromMethods($model, $relationMethods);
+    }
 
-        if (!$this->isRelation($relation)) {
-            throw $this->createRelationshipNotExistsException($name);
+    /**
+     * @param Model $model
+     * @return string[]
+     */
+    private function getRelationMethodsFromChildMethods(Model $model)
+    {
+        $relationMethods = [];
+
+        foreach ($this->getChildMethods($model) as $methodName) {
+            // Filter out attribute getters/setters
+            if (substr($methodName, -9) == 'Attribute') {
+                continue;
+            }
+
+            // Filter out scope methods
+            if (substr($methodName, 0, 5) == 'scope') {
+                continue;
+            }
+
+            $reflection = new \ReflectionMethod($model, $methodName);
+
+            // Filter out methods that use parameters
+            if ($reflection->getNumberOfParameters() != 0) {
+                continue;
+            }
+
+            $relationMethods[] = $methodName;
         }
 
-        return $relation;
-    }
-
-    protected function isRelationshipLoaded(Model $model, $name)
-    {
-        return $model->relationLoaded($name);
+        return $relationMethods;
     }
 
     /**
-     * @param $name
-     * @return RelationshipNotExists
+     * @param Model $model
+     * @param array $methodNames
+     * @return Relation[]
      */
-    private function createRelationshipNotExistsException($name)
+    private function getRelationsFromMethods(Model $model, array $methodNames)
     {
-        return new RelationshipNotExists(StringHelper::slugCase($name));
+        $relations = [];
+
+        foreach ($methodNames as $methodName)
+        {
+            $relation = $model->$methodName();
+
+            if ($relation instanceof Relation) {
+                $relations[$methodName] = $relation;
+            }
+        }
+
+        return $relations;
     }
 
     /**
-     * @param mixed $object
-     * @return bool
+     * This function should return methods defined in the child model class.
+     *
+     * @param Model $model
+     * @return string[]
      */
-    protected function isRelation($object)
+    private function getChildMethods(Model $model)
     {
-        return $object instanceof Relation;
-    }
+        $modelClass = get_class($model);
 
-    /**
-     * @param Relation $relation
-     * @return bool
-     */
-    protected function isBelongsTo(Relation $relation)
-    {
-        return $relation instanceof BelongsTo;
-    }
+        // Filter out methods defined in Model class.
+        $childMethods = array_diff(
+            get_class_methods($modelClass),
+            get_class_methods(Model::class)
+        );
 
-    /**
-     * @param Relation $relation
-     * @return bool
-     */
-    protected function isHasOne(Relation $relation)
-    {
-        return $relation instanceof HasOne;
+        // Filter out trait methods (scopes, soft deletes, etc).
+        foreach (class_uses($modelClass) as $modelTrait) {
+            $childMethods = array_diff($childMethods, get_class_methods($modelTrait));
+        }
+
+        return $childMethods;
     }
 
     /**

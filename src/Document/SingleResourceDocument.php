@@ -21,10 +21,7 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
      */
     public function getLinks()
     {
-        $links = $this->createLinks();
-        $links->setSelf(new Link($this->path));
-
-        return $links;
+        return $this->linksFactory->createDocumentLinks();
     }
 
     /**
@@ -35,7 +32,7 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
      */
     public function getResourceId()
     {
-        $transformer = $this->container->getTransformer($this->domainObject);
+        $transformer = $this->container->get($this->domainObject);
         return $transformer->getId($this->domainObject);
     }
 
@@ -52,7 +49,7 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
-        $transformer = $this->container->getTransformer($this->model);
+        $transformer = $this->container->get($this->model);
         $transformation->data->addPrimaryResource(
             $transformer->transformToResource($transformation, $this->domainObject)
         );
@@ -66,7 +63,7 @@ class SingleResourceDocument extends AbstractSuccessfulDocument
         Transformation $transformation,
         array $additionalMeta = []
     ) {
-        $transformer = $this->container->getTransformer($this->model);
+        $transformer = $this->container->get($this->model);
 
         return $transformer->transformRelationship(
             $relationshipName,

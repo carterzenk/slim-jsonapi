@@ -5,11 +5,17 @@ namespace CarterZenk\Tests\JsonApi\Model;
 class Organization extends BaseModel
 {
     protected $table = 'organizations';
+
     protected $fillable = [
-        'name', 'org_id', 'user_id'
+        'name',
+        'org_id',
+        'user_id'
     ];
 
-    protected $visibleRelationships = [
+    protected $visible = [
+        'name',
+        'created_at',
+        'updated_at',
         'users'
     ];
 

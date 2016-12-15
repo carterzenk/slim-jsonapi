@@ -3,51 +3,49 @@
 namespace CarterZenk\JsonApi\Transformer;
 
 use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
-use CarterZenk\JsonApi\Model\Model;
-use CarterZenk\JsonApi\Model\Paginator;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Pimple\Container as PimpleContainer;
 
 class Container extends PimpleContainer implements ContainerInterface
 {
     /**
-     * @var string
+     * @var LinksFactoryInterface
      */
-    protected $baseUri;
+    protected $linksFactory;
 
     /**
      * Container constructor.
-     * @param string $baseUri
+     * @param LinksFactoryInterface $linksFactory
      */
-    public function __construct($baseUri)
+    public function __construct(LinksFactoryInterface $linksFactory)
     {
-        $this->baseUri = $baseUri;
-
         parent::__construct();
+
+        $this->linksFactory = $linksFactory;
     }
 
-    /**
+    /*
      * @inheritdoc
      */
-    public function getTransformer($domainObject)
+    public function get($domainObject)
     {
         $modelClass = $this->getModelClass($domainObject);
 
         if (!$this->offsetExists($modelClass)) {
-            $this->offsetSet($modelClass, function (Container $container) use ($modelClass) {
-                return $this->createResourceTransformer($modelClass, $container);
-            });
+            $this->offsetSet($modelClass, $this->getBuilderCallable($modelClass));
         }
 
         return $this->offsetGet($modelClass);
     }
 
     /**
-     * @param $domainObject
+     * @param mixed $domainObject
      * @return string
      * @throws InvalidDomainObjectException
      */
-    private function getModelClass($domainObject)
+    protected function getModelClass($domainObject)
     {
         if ($domainObject instanceof Model) {
             return get_class($domainObject);
@@ -59,23 +57,24 @@ class Container extends PimpleContainer implements ContainerInterface
     }
 
     /**
-     * @param $modelClass
-     * @param ContainerInterface $container
-     * @return ResourceTransformer
+     * @param string $modelClass
+     * @return callable
      */
-    private function createResourceTransformer($modelClass, ContainerInterface $container)
+    protected function getBuilderCallable($modelClass)
     {
-        $model = new $modelClass();
+        return function ($container) use ($modelClass) {
+            $model = new $modelClass();
 
-        $builder = new Builder($model, $container, $this->baseUri);
+            $builder = new Builder($model, $this->linksFactory);
 
-        return new ResourceTransformer(
-            $builder->getType(),
-            $builder->getIdKey(),
-            $this->baseUri,
-            $builder->getAttributesToHide(),
-            $builder->getDefaultIncludedRelationships(),
-            $builder->getRelationshipsTransformer($container)
-        );
+            return new ResourceTransformer(
+                $builder->getType(),
+                $builder->getIdKey(),
+                $builder->getAttributesToHide(),
+                $builder->getDefaultIncludedRelationships(),
+                $builder->getRelationshipsTransformer($container),
+                $this->linksFactory
+            );
+        };
     }
 }

@@ -6,10 +6,9 @@ use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use CarterZenk\JsonApi\Model\Paginator;
 use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
-use CarterZenk\JsonApi\Transformer\Transformer;
-use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
 use Illuminate\Support\Str;
@@ -53,13 +52,7 @@ trait JsonApiTrait
      */
     public function getModel()
     {
-        $model = $this->getBuilder()->getModel();
-
-        if ($model instanceof Model) {
-            return $model;
-        } else {
-            throw $this->exceptionFactory->createInvalidDomainObjectException($model);
-        }
+        return $this->getBuilder()->getModel();
     }
 
     /**
