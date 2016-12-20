@@ -14,4 +14,13 @@ class StringHelper
     {
         return Str::slug(Str::snake(ucwords($name)));
     }
+
+    /**
+     * @param $name
+     * @return string
+     */
+    public static function camelCase($name)
+    {
+        return Str::camel($name);
+    }
 }

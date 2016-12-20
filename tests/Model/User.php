@@ -15,18 +15,26 @@ class User extends BaseModel
         'id',
         'created_at',
         'updated_at',
-        'assignedContacts',
-        'organizations'
     ];
 
-    public function getRelationMethods()
-    {
-        return [
-            'ownedContacts',
-            'assignedContacts',
-            'organizations'
-        ];
-    }
+    protected $fillableRelations = [
+        'organizations',
+        'assignedContacts',
+        'otherOrganizations',
+        'activeContact'
+    ];
+
+    protected $relationMethods = [
+        'ownedContacts',
+        'assignedContacts',
+        'activeContact',
+        'organizations',
+        'otherOrganizations'
+    ];
+
+    protected $fullyReplaceableRelations = [
+        'organizations'
+    ];
 
     public function ownedContacts()
     {
@@ -38,7 +46,17 @@ class User extends BaseModel
         return $this->hasMany(Contact::class, 'assigned_id', 'id');
     }
 
+    public function activeContact()
+    {
+        return $this->hasOne(Contact::class, 'active_id', 'id');
+    }
+
     public function organizations()
+    {
+        return $this->belongsToMany(Organization::class, 'organization_users', 'user_id', 'org_id');
+    }
+
+    public function otherOrganizations()
     {
         return $this->belongsToMany(Organization::class, 'organization_users', 'user_id', 'org_id');
     }

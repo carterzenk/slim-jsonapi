@@ -30,10 +30,10 @@ class CreateContactsTable extends Migration
             $table->string('zip', 15)->nullable();
             $table->integer('owner_id', false, true)->nullable();
             $table->integer('assigned_id', false, true)->nullable();
+            $table->integer('active_id', false, true)->nullable();
             $table->date('birthday')->nullable();
-            $table->dateTime('created_at')->nullable();
-            $table->dateTime('updated_at')->nullable();
-            $table->dateTime('deleted_at')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         $faker = Factory::create();
@@ -57,6 +57,7 @@ class CreateContactsTable extends Migration
                 'updated_at' => $faker->dateTimeBetween('-3 years', 'now')
             ]);
 
+            $contact->setAttribute('active_id', $faker->numberBetween(1, 5));
             $contact->setAttribute('owner_id', $faker->numberBetween(1, 5));
             $contact->setAttribute('assigned_id', $faker->numberBetween(1, 5));
 

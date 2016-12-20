@@ -271,17 +271,15 @@ class AppTest extends BaseTestCase
         $this->assertEquals(1, $contact->assignee->id);
     }
 
-    public function testHydrateToManyRelationship()
+    public function testHydrateToManyRelationshipForCreate()
     {
-        $this->client->patch('/users/1', [
+        $this->client->post('/users', [
             'data' => [
                 'type' => 'user',
-                'id' => '1',
                 'attributes' => [
                     'f_name' => 'John',
                     'l_name' => 'Doe',
-                    'email' => 'john@example.ecom',
-                    'title' => 'Mr.',
+                    'email' => 'john@example.com',
                     'phone' => '888-888-8888',
                     'phone_cell' => '999-999-9999',
                     'phone_office' => '777-777-7777',
@@ -290,7 +288,7 @@ class AppTest extends BaseTestCase
                     'state' => 'MN'
                 ],
                 'relationships' => [
-                    'owned-contacts' => [
+                    'assigned-contacts' => [
                         'data' => [
                             [
                                 'type' => 'lead',
@@ -318,12 +316,16 @@ class AppTest extends BaseTestCase
             ]
         ]);
 
-        $this->assertEquals(202, $this->client->response->getStatusCode());
+        $this->dumpResponse();
 
-        $ownedContacts = User::find(1)->ownedContacts;
+        $this->assertEquals(201, $this->client->response->getStatusCode());
+
+        $user = User::all()->last();
+
+        $assignedContacts = $user->assignedContacts;
 
         for ($i = 1; $i <= 5; $i++) {
-            $this->assertNotNull($ownedContacts->find($i));
+            $this->assertNotNull($assignedContacts->find($i));
         }
     }
 
@@ -362,17 +364,6 @@ class AppTest extends BaseTestCase
         ]);
     }
 
-    public function testClientGeneratedIdError()
-    {
-        $this->expectException(ClientGeneratedIdNotSupported::class);
-        $this->client->post('/contacts', [
-            'data' => [
-                'type' => 'contact',
-                'id' => '1'
-            ]
-        ]);
-    }
-
     public function testErrorResponse()
     {
         $this->expectException(ResourceNotExists::class);
@@ -394,43 +385,5 @@ class AppTest extends BaseTestCase
     {
         $this->expectException(RelationshipNotExists::class);
         $this->client->get('/users/1/relationships/someinvalidrelationship');
-    }
-
-    public function testBadRequestError()
-    {
-        $this->expectException(BadRequest::class);
-        $this->client->post('/contacts', [
-            'data' => [
-                'type' => 'contact',
-                'attributes' => [
-                    'invalid' => '33212837492048294839403988457575'
-                ]
-            ]
-        ]);
-    }
-
-    public function testHydrateToManyRelationshipWithInvalidIdError()
-    {
-        $this->expectException(RelatedResourceNotFound::class);
-        $this->client->patch('/users/1', [
-            'data' => [
-                'type' => 'user',
-                'id' => '1',
-                'relationships' => [
-                    'owned-contacts' => [
-                        'data' => [
-                            [
-                                'type' => 'contact',
-                                'id' => '1'
-                            ],
-                            [
-                                'type' => 'contact',
-                                'id' => '700'
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]);
     }
 }

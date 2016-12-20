@@ -2,12 +2,10 @@
 
 namespace CarterZenk\Tests\JsonApi\Model;
 
-use CarterZenk\JsonApi\Model\RelationshipMassAssignment;
+use CarterZenk\JsonApi\Model\Relationable;
 use Illuminate\Database\Eloquent\Model;
 
 abstract class BaseModel extends Model
 {
-    use RelationshipMassAssignment;
-
-    public $timestamps = false;
+    use Relationable;
 }

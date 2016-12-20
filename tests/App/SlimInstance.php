@@ -10,6 +10,7 @@ use CarterZenk\JsonApi\Encoder\JsonApiEncoder;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactory;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
 use CarterZenk\JsonApi\Hydrator\Hydrator;
+use CarterZenk\JsonApi\Hydrator\ModelHydrator;
 use CarterZenk\JsonApi\Hydrator\ResourceHydrator;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
@@ -103,10 +104,6 @@ class SlimInstance
             return new ExceptionFactory();
         };
 
-        $container[HydratorInterface::class] = function (ContainerInterface $container) {
-            return new ResourceHydrator();
-        };
-
         $container[SerializerInterface::class] = function (ContainerInterface $container) {
             return new JsonApiSerializer(
                 $container->get('settings')['jsonApi']['encoderOptions']
@@ -127,7 +124,6 @@ class SlimInstance
             return new ContactsController(
                 $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(HydratorInterface::class),
                 $container->get(FilteringStrategyInterface::class)
             );
         };
@@ -138,7 +134,6 @@ class SlimInstance
             return new UsersController(
                 $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(HydratorInterface::class),
                 $container->get(FilteringStrategyInterface::class)
             );
         };
@@ -149,7 +144,6 @@ class SlimInstance
             return new EloquentModelController(
                 $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(HydratorInterface::class),
                 $container->get(FilteringStrategyInterface::class)
             );
         };
@@ -205,6 +199,11 @@ class SlimInstance
         $app->patch(
             '/contacts/{id}',
             '\CarterZenk\Tests\JsonApi\Controller\ContactsController:updateResourceAction'
+        );
+
+        $app->post(
+            '/users',
+            '\CarterZenk\Tests\JsonApi\Controller\UsersController:createResourceAction'
         );
 
         $app->patch(

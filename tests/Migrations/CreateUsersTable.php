@@ -16,7 +16,7 @@ class CreateUsersTable extends Migration
     public function up()
     {
         Manager::schema()->create('users', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->increments('id');
             $table->string('f_name', 50)->nullable();
             $table->string('l_name', 50)->nullable();
             $table->string('email', 50)->nullable();
@@ -29,8 +29,7 @@ class CreateUsersTable extends Migration
             $table->string('state', 50)->nullable();
             $table->string('zip', 15)->nullable();
             $table->integer('timezone')->nullable();
-            $table->dateTime('created_at')->nullable();
-            $table->dateTime('updated_at')->nullable();
+            $table->timestamps();
         });
 
         $faker = Factory::create();
