@@ -6,32 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 trait RelationshipHelperTrait
 {
     /**
-     * This function should return an array of relation methods with each
-     * key as the method name, and the returned relation as a value.
-     *
      * @param Model $model
-     * @return Relation[]
+     * @return \Illuminate\Database\Eloquent\Relations\Relation[]
      */
-    protected function getRelations(Model $model)
+    public function getRelationMethods(Model $model)
     {
-        if (method_exists($model, 'getRelationMethods')) {
+        if (method_exists($model, 'getRelationMethods') && $model->getRelationMethods() !== null) {
             $relationMethods = $model->getRelationMethods();
         } else {
             $relationMethods = $this->getRelationMethodsFromChildMethods($model);
         }
 
-        return $this->getRelationsFromMethods($model, $relationMethods);
+        return $this->getRelationsFromMethods($relationMethods, $model);
     }
 
     /**
      * @param Model $model
-     * @return string[]
+     * @return \string[]
      */
     private function getRelationMethodsFromChildMethods(Model $model)
     {
@@ -62,11 +61,11 @@ trait RelationshipHelperTrait
     }
 
     /**
-     * @param Model $model
      * @param array $methodNames
-     * @return Relation[]
+     * @param Model $model
+     * @return \Illuminate\Database\Eloquent\Relations\Relation[]
      */
-    private function getRelationsFromMethods(Model $model, array $methodNames)
+    private function getRelationsFromMethods(array $methodNames, Model $model)
     {
         $relations = [];
 
@@ -86,7 +85,7 @@ trait RelationshipHelperTrait
      * This function should return methods defined in the child model class.
      *
      * @param Model $model
-     * @return string[]
+     * @return \string[]
      */
     private function getChildMethods(Model $model)
     {

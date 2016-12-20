@@ -4,6 +4,7 @@ namespace CarterZenk\JsonApi\Controller;
 
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
+use CarterZenk\JsonApi\Hydrator\ModelHydrator;
 use CarterZenk\JsonApi\Model\Paginator;
 use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
@@ -22,11 +23,6 @@ trait JsonApiTrait
      * @var string[]
      */
     protected $builderColumns = ['*'];
-
-    /**
-     * @var HydratorInterface
-     */
-    protected $hydrator;
 
     /**
      * @var ExceptionFactoryInterface
@@ -271,7 +267,9 @@ trait JsonApiTrait
      */
     protected function hydrate($domainObject, RequestInterface $request)
     {
-        return $this->hydrator->hydrate(
+        $hydrator = new ModelHydrator();
+
+        return $hydrator->hydrate(
             $request,
             $this->exceptionFactory,
             $domainObject
@@ -288,7 +286,9 @@ trait JsonApiTrait
      */
     protected function hydrateRelationship($domainObject, $relationshipName, RequestInterface $request)
     {
-        return $this->hydrator->hydrateRelationship(
+        $hydrator = new ModelHydrator();
+
+        return $hydrator->hydrateRelationship(
             $relationshipName,
             $request,
             $this->exceptionFactory,

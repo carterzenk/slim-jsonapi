@@ -19,8 +19,7 @@ class CreateOrganizationsTable extends Migration
             $table->integer('id', true);
             $table->string('name', 50)->nullable();
             $table->integer('type_id', false, true)->nullable();
-            $table->dateTime('created_at')->nullable();
-            $table->dateTime('updated_at')->nullable();
+            $table->timestamps();
         });
 
         $faker = Factory::create();

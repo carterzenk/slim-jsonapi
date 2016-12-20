@@ -38,18 +38,15 @@ abstract class JsonApiController
     /**
      * @param EncoderInterface $encoder
      * @param ExceptionFactoryInterface $exceptionFactory
-     * @param HydratorInterface $hydrator
      * @param FilteringStrategyInterface $filteringStrategy
      */
     public function __construct(
         EncoderInterface $encoder,
         ExceptionFactoryInterface $exceptionFactory,
-        HydratorInterface $hydrator,
         FilteringStrategyInterface $filteringStrategy
     ) {
         $this->encoder = $encoder;
         $this->exceptionFactory = $exceptionFactory;
-        $this->hydrator = $hydrator;
         $this->filteringStrategy = $filteringStrategy;
     }
 

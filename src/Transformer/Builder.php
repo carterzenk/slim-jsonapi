@@ -45,7 +45,7 @@ class Builder implements BuilderInterface
     ) {
         $this->model = $model;
         $this->linksFactory = $linksFactory;
-        $this->relations = $this->getRelations($model);
+        $this->relations = $this->getRelationMethods($model);
     }
 
     /**

@@ -32,15 +32,14 @@ class Contact extends BaseModel
         'state',
         'zip',
         'birthday',
-        'invalid',
-        'assignee'
+        'invalid'
     ];
 
     protected $with = [
         'assignee'
     ];
 
-    protected $fillableRelationships = [
+    protected $fillableRelations = [
         'assignee'
     ];
 

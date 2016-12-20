@@ -18,6 +18,7 @@ class CreateOrganizationUsersTable extends Migration
             $table->integer('id', true);
             $table->integer('org_id', false, true)->nullable();
             $table->integer('user_id', false, true)->nullable();
+            $table->timestamps();
         });
 
         for ($i = 0; $i < 5; $i++) {
