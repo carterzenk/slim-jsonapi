@@ -2,16 +2,11 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
+use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
-use WoohooLabs\Yin\JsonApi\Schema\Relationship\AbstractRelationship;
-use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
-use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
-use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class Builder implements BuilderInterface
 {
@@ -19,9 +14,14 @@ class Builder implements BuilderInterface
     use TypeTrait;
 
     /**
-     * @var Model
+     * @var string
      */
-    protected $model;
+    protected $type;
+
+    /**
+     * @var string
+     */
+    protected $pluralType;
 
     /**
      * @var Relation[]
@@ -29,200 +29,132 @@ class Builder implements BuilderInterface
     protected $relations;
 
     /**
-     * @var LinksFactoryInterface
+     * @var string[]
      */
-    protected $linksFactory;
+    protected $foreignKeys;
 
     /**
      * TransformerBuilder constructor.
      * @param Model $model
-     * @param LinksFactoryInterface $linksFactory
-     * @internal param string $baseUri
      */
-    public function __construct(
-        Model $model,
-        LinksFactoryInterface $linksFactory
-    ) {
-        $this->model = $model;
-        $this->linksFactory = $linksFactory;
-        $this->relations = $this->getRelationMethods($model);
+    public function __construct(Model $model)
+    {
+        $this->type = $this->getModelType($model);
+
+        if ($model->getRelationMethods() !== null) {
+            $relationMethods = $model->getRelationMethods();
+        } else {
+            $relationMethods = $this->getRelationMethodsFromChildMethods($model);
+        }
+
+        $this->setRelationsFromMethods($relationMethods, $model);
     }
 
     /**
-     * @inheritdoc
+     * @param Model $model
+     * @return \string[]
+     */
+    private function getRelationMethodsFromChildMethods(Model $model)
+    {
+        $relationMethods = [];
+
+        foreach ($this->getChildMethods($model) as $methodName) {
+            // Filter out attribute getters/setters
+            if (substr($methodName, -9) == 'Attribute') {
+                continue;
+            }
+
+            // Filter out scope methods
+            if (substr($methodName, 0, 5) == 'scope') {
+                continue;
+            }
+
+            $reflection = new \ReflectionMethod($model, $methodName);
+
+            // Filter out methods that use parameters
+            if ($reflection->getNumberOfParameters() != 0) {
+                continue;
+            }
+
+            $relationMethods[] = $methodName;
+        }
+
+        return $relationMethods;
+    }
+
+    /**
+     * This function should return methods defined in the child model class.
+     *
+     * @param Model $model
+     * @return \string[]
+     */
+    private function getChildMethods(Model $model)
+    {
+        $modelClass = get_class($model);
+
+        // Filter out methods defined in Model class.
+        $childMethods = array_diff(
+            get_class_methods($modelClass),
+            get_class_methods(Model::class)
+        );
+
+        // Filter out trait methods (scopes, soft deletes, etc).
+        foreach (class_uses($modelClass) as $modelTrait) {
+            $childMethods = array_diff($childMethods, get_class_methods($modelTrait));
+        }
+
+        return $childMethods;
+    }
+
+    /**
+     * @param array $methodNames
+     * @param Model $model
+     */
+    private function setRelationsFromMethods(array $methodNames, Model $model)
+    {
+        foreach ($methodNames as $methodName) {
+
+            $relation = $model->$methodName();
+
+            if ($relation instanceof Relation && $model->isVisible($methodName)) {
+                $this->relations[$methodName] = $relation;
+            }
+
+            if ($relation instanceof BelongsTo) {
+                $this->foreignKeys[] = $relation->getForeignKey();
+            }
+        }
+    }
+
+    /**
+     * @return string
      */
     public function getType()
     {
-        return $this->getModelType($this->model);
+        return $this->type;
     }
 
     /**
-     * @inheritdoc
+     * @return string
      */
-    public function getIdKey()
+    public function getPluralType()
     {
-        return $this->model->getKeyName();
+        return StringHelper::pluralize($this->type);
     }
 
     /**
-     * @inheritdoc
+     * @return string[]
      */
-    public function getDefaultIncludedRelationships()
+    public function getForeignKeys()
     {
-        $defaultIncludedRelationships = [];
-
-        $query = $this->model->newQueryWithoutScopes();
-
-        foreach (array_keys($query->getEagerLoads()) as $includedRelationship) {
-            $defaultIncludedRelationships[] = StringHelper::slugCase($includedRelationship);
-        }
-
-        return $defaultIncludedRelationships;
+        return $this->foreignKeys;
     }
 
     /**
-     * @inheritdoc
+     * @return \Illuminate\Database\Eloquent\Relations\Relation[]
      */
-    public function getAttributesToHide()
+    public function getRelations()
     {
-        $hiddenAttributes = $this->getForeignKeys();
-        $hiddenAttributes[] = $this->getIdKey();
-
-        return $hiddenAttributes;
-    }
-
-    /**
-     * @return \string[]
-     */
-    protected function getForeignKeys()
-    {
-        $foreignKeys = [];
-
-        foreach ($this->relations as $name => $relation) {
-            if ($relation instanceof BelongsTo) {
-                $foreignKeys[] = $relation->getForeignKey();
-            }
-        }
-
-        return $foreignKeys;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getRelationshipsTransformer(ContainerInterface $container)
-    {
-        $relationships = [];
-
-        foreach ($this->getVisibleRelations() as $name) {
-            $keyName = StringHelper::slugCase($name);
-
-            $relationships[$keyName] = $this->getRelationshipCallable(
-                $container,
-                $this->relations[$name],
-                $name,
-                $keyName
-            );
-        }
-
-        return $relationships;
-    }
-
-    /**
-     * @return array
-     */
-    protected function getVisibleRelations()
-    {
-        $values = array_keys($this->relations);
-
-        if (count($this->model->getVisible()) > 0) {
-            $values = array_intersect_key($values, array_flip($this->model->getVisible()));
-        }
-
-        if (count($this->model->getHidden()) > 0) {
-            $values = array_diff_key($values, array_flip($this->model->getHidden()));
-        }
-
-        return $values;
-    }
-
-    /**
-     * @param ContainerInterface $container
-     * @param Relation $relation
-     * @param string $name
-     * @param string $keyName
-     * @returns callable
-     * @throws RelationshipNotExists
-     */
-    protected function getRelationshipCallable(
-        ContainerInterface $container,
-        Relation $relation,
-        $name,
-        $keyName
-    ) {
-        return function ($domainObject) use ($name, $keyName, $relation, $container) {
-            $primaryTransformer = $container->get($domainObject);
-            $relatedModel = $relation->getRelated()->newInstance();
-            $relatedTransformer = $container->get($relatedModel);
-
-            $relationship = $this->createRelationshipFromRelation($relation);
-
-            // Links
-            $links = $this->linksFactory->createRelationshipLinks(
-                $keyName,
-                $domainObject,
-                $primaryTransformer
-            );
-            $relationship->setLinks($links);
-
-            // Data
-            $this->setRelationshipData(
-                $relationship,
-                $relatedTransformer,
-                $domainObject,
-                $name
-            );
-
-            return $relationship;
-        };
-    }
-
-    /**
-     * @param Relation $relation
-     * @return AbstractRelationship
-     */
-    private function createRelationshipFromRelation(Relation $relation)
-    {
-        if ($this->isToOne($relation)) {
-            return ToOneRelationship::create();
-        } else {
-            return ToManyRelationship::create();
-        }
-    }
-
-    /**
-     * @param AbstractRelationship $relationship
-     * @param ResourceTransformerInterface $transformer
-     * @param Model $model
-     * @param string $name
-     */
-    private function setRelationshipData(
-        AbstractRelationship &$relationship,
-        ResourceTransformerInterface $transformer,
-        Model $model,
-        $name
-    ) {
-        if ($model->relationLoaded($name)) {
-            $data = $model->$name;
-
-            $relationship->setData($data, $transformer);
-        } else {
-            $dataCallable = function () use ($model, $name) {
-                return $model->$name;
-            };
-
-            $relationship->setDataAsCallable($dataCallable, $transformer);
-            $relationship->omitWhenNotIncluded();
-        }
+        return $this->relations;
     }
 }

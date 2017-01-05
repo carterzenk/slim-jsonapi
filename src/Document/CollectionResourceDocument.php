@@ -6,7 +6,7 @@ use WoohooLabs\Yin\JsonApi\Schema\Data\CollectionData;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Transformer\Transformation;
 
-class CollectionResourceDocument extends AbstractSuccessfulDocument
+class CollectionResourceDocument extends AbstractSuccessDocument
 {
     /**
      * @inheritdoc
@@ -61,7 +61,8 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
      */
     protected function fillData(Transformation $transformation)
     {
-        $transformer = $this->container->get($this->model);
+        $transformer = $this->container->get($this->modelClass);
+
         foreach ($this->getItems() as $item) {
             $transformation->data->addPrimaryResource($transformer->transformToResource($transformation, $item));
         }
@@ -70,17 +71,18 @@ class CollectionResourceDocument extends AbstractSuccessfulDocument
     /**
      * @inheritdoc
      */
-    protected function getRelationshipContentInternal(
+    public function getRelationshipContent(
         $relationshipName,
         Transformation $transformation,
         array $additionalMeta = []
     ) {
+        $result = [];
+
         if ($this->hasItems() === false) {
-            return [];
+            return $result;
         }
 
-        $transformer = $this->container->get($this->model);
-        $result = [];
+        $transformer = $this->container->get($this->modelClass);
 
         foreach ($this->getItems() as $item) {
             $result[] = $transformer->transformRelationship(

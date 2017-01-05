@@ -23,4 +23,13 @@ class StringHelper
     {
         return Str::camel($name);
     }
+
+    /**
+     * @param $word
+     * @return string
+     */
+    public static function pluralize($word)
+    {
+        return Str::plural($word);
+    }
 }

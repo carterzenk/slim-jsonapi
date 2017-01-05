@@ -3,8 +3,6 @@
 namespace CarterZenk\JsonApi\Transformer;
 
 use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
-use Illuminate\Contracts\Pagination\Paginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Pimple\Container as PimpleContainer;
 
@@ -33,8 +31,17 @@ class Container extends PimpleContainer implements ContainerInterface
     {
         $modelClass = $this->getModelClass($domainObject);
 
-        if (!$this->offsetExists($modelClass)) {
-            $this->offsetSet($modelClass, $this->getBuilderCallable($modelClass));
+        if ($this->offsetExists($modelClass) === false) {
+            $this->offsetSet($modelClass, function ($container) use ($modelClass) {
+                $model = new $modelClass();
+                $builder = new Builder($model);
+
+                return new ResourceTransformer(
+                    $container,
+                    $this->linksFactory,
+                    $builder
+                );
+            });
         }
 
         return $this->offsetGet($modelClass);
@@ -47,34 +54,14 @@ class Container extends PimpleContainer implements ContainerInterface
      */
     protected function getModelClass($domainObject)
     {
-        if ($domainObject instanceof Model) {
+        if (is_string($domainObject)) {
+            return $domainObject;
+        } else if ($domainObject instanceof Model) {
             return get_class($domainObject);
-        } elseif ($domainObject instanceof Collection || $domainObject instanceof Paginator) {
-            return $domainObject->getQueueableClass();
         } else {
-            throw new InvalidDomainObjectException($domainObject);
-        }
-    }
-
-    /**
-     * @param string $modelClass
-     * @return callable
-     */
-    protected function getBuilderCallable($modelClass)
-    {
-        return function ($container) use ($modelClass) {
-            $model = new $modelClass();
-
-            $builder = new Builder($model, $this->linksFactory);
-
-            return new ResourceTransformer(
-                $builder->getType(),
-                $builder->getIdKey(),
-                $builder->getAttributesToHide(),
-                $builder->getDefaultIncludedRelationships(),
-                $builder->getRelationshipsTransformer($container),
-                $this->linksFactory
+            throw new \InvalidArgumentException(
+                'Must use either model class name or model instance to retrieve transformer.'
             );
-        };
+        }
     }
 }

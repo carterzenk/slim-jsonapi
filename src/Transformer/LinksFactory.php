@@ -2,6 +2,7 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
+use CarterZenk\JsonApi\Model\StringHelper;
 use Illuminate\Support\Str;
 use Psr\Http\Message\UriInterface;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
@@ -49,7 +50,7 @@ class LinksFactory implements LinksFactoryInterface
     /**
      * @return Links
      */
-    private function createLinks()
+    public function createLinks()
     {
         return Links::createWithBaseUri($this->baseUri);
     }
@@ -90,17 +91,14 @@ class LinksFactory implements LinksFactoryInterface
     /**
      * @inheritdoc
      */
-    public function createRelationshipLinks($name, $domainObject, ResourceTransformerInterface $transformer)
+    public function createRelationshipLinks($pluralType, $id, $name)
     {
-        $pluralType = Str::plural($transformer->getType($domainObject));
-        $modelId = $transformer->getId($domainObject);
-
         $links = $this->createLinks();
 
-        $selfLink = new Link('/'.$pluralType.'/'.$modelId.'/relationships/'.$name);
+        $selfLink = new Link('/'.$pluralType.'/'.$id.'/relationships/'.$name);
         $links->setSelf($selfLink);
 
-        $relatedLink = new Link('/'.$pluralType.'/'.$modelId.'/'.$name);
+        $relatedLink = new Link('/'.$pluralType.'/'.$id.'/'.$name);
         $links->setRelated($relatedLink);
 
         return $links;

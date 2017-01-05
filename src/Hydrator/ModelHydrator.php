@@ -10,6 +10,7 @@ use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Hydrator\HydratorInterface;
 use WoohooLabs\Yin\JsonApi\Hydrator\Relationship\ToManyRelationship;
@@ -33,6 +34,9 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      */
     protected $relationshipHydratorFactory;
 
+    /**
+     * ModelHydrator constructor.
+     */
     public function __construct()
     {
         $this->relationshipHydratorFactory = new RelationshipHydratorFactory();
@@ -42,7 +46,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @inheritdoc
      * @throws \Exception
      */
-    public function hydrate(RequestInterface $request, ExceptionFactoryInterface $exceptionFactory, $domainObject) {
+    public function hydrate(RequestInterface $request, ExceptionFactoryInterface $exceptionFactory, $domainObject)
+    {
         $this->setExceptionFactory($exceptionFactory);
 
         $this->validateData($request);
@@ -81,7 +86,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
     /**
      * @param ExceptionFactoryInterface $exceptionFactory
      */
-    protected function setExceptionFactory(ExceptionFactoryInterface $exceptionFactory) {
+    protected function setExceptionFactory(ExceptionFactoryInterface $exceptionFactory)
+    {
         $this->exceptionFactory = $exceptionFactory;
     }
 
@@ -89,7 +95,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @param RequestInterface $request
      * @throws \Exception
      */
-    protected function validateData(RequestInterface $request) {
+    protected function validateData(RequestInterface $request)
+    {
         $data = $request->getResource();
 
         if ($data === null) {
@@ -102,7 +109,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @param Model $domainObject
      * @throws \Exception
      */
-    protected function validateType(RequestInterface $request, Model $domainObject) {
+    protected function validateType(RequestInterface $request, Model $domainObject)
+    {
         $type = $request->getResourceType();
 
         if (is_null($type)) {
@@ -125,7 +133,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @return Model
      * @throws AttributeUpdateNotAllowed
      */
-    protected function hydrateAttributes(RequestInterface $request, Model $domainObject) {
+    protected function hydrateAttributes(RequestInterface $request, Model $domainObject)
+    {
         $attributes = $request->getResourceAttributes();
 
         if (empty($attributes)) {
@@ -148,7 +157,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @param Model $domainObject
      * @return Model
      */
-    protected function hydrateRelationships(RequestInterface $request, Model $domainObject) {
+    protected function hydrateRelationships(RequestInterface $request, Model $domainObject)
+    {
         $data = $request->getResource();
 
         if (empty($data["relationships"])) {
@@ -196,11 +206,7 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
             throw $this->exceptionFactory->createDataMemberMissingException($request);
         }
 
-        $relationshipHydrator->hydrate(
-            $request,
-            $this->exceptionFactory,
-            $this->createRelationship($relationshipData)
-        );
+        $relationshipHydrator->hydrate($request, $this->exceptionFactory, $relationship);
 
         return $domainObject;
     }
@@ -212,7 +218,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @throws RelationshipUpdateNotAllowed
      * @throws \Exception
      */
-    protected function validateRelationship($relationshipName, $relationMethodName, Model $domainObject) {
+    protected function validateRelationship($relationshipName, $relationMethodName, Model $domainObject)
+    {
         if (method_exists($domainObject, $relationMethodName) === false) {
             throw $this->exceptionFactory->createRelationshipNotExists($relationshipName);
         }
@@ -228,7 +235,8 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
      * @param array|null $relationship
      * @return ToOneRelationship|ToManyRelationship|null
      */
-    private function createRelationship($relationship) {
+    private function createRelationship($relationship)
+    {
         if (array_key_exists("data", $relationship) === false) {
             return null;
         }
@@ -236,7 +244,7 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
         //If this is a request to clear the relationship, we create an empty relationship
         if (is_null($relationship["data"])) {
             $result = new ToOneRelationship();
-        } elseif ($this->isAssociativeArray($relationship["data"]) === true) {
+        } elseif (Arr::isAssoc($relationship["data"]) === true) {
             $result = new ToOneRelationship(
                 ResourceIdentifier::fromArray($relationship["data"], $this->exceptionFactory)
             );
@@ -250,13 +258,5 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
         }
 
         return $result;
-    }
-
-    /**
-     * @param array $array
-     * @return bool
-     */
-    private function isAssociativeArray(array $array) {
-        return (bool)count(array_filter(array_keys($array), 'is_string'));
     }
 }

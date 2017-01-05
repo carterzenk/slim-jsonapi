@@ -3,7 +3,7 @@
 namespace CarterZenk\JsonApi\Document;
 
 use Illuminate\Database\Eloquent\Model;
-use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
+use Psr\Http\Message\UriInterface;
 
 class DocumentFactory implements DocumentFactoryInterface
 {
@@ -24,16 +24,16 @@ class DocumentFactory implements DocumentFactoryInterface
     /**
      * @inheritdoc
      */
-    public function createResourceDocument(Model $model, RequestInterface $request)
+    public function createResourceDocument(UriInterface $uri, Model $model)
     {
-        return new SingleResourceDocument($model, $request, $this->jsonApiVersion);
+        return new SingleResourceDocument($uri, $model, $this->jsonApiVersion);
     }
 
     /**
      * @inheritdoc
      */
-    public function createCollectionDocument(Model $model, RequestInterface $request)
+    public function createCollectionDocument(UriInterface $uri, Model $model)
     {
-        return new CollectionResourceDocument($model, $request, $this->jsonApiVersion);
+        return new CollectionResourceDocument($uri, $model, $this->jsonApiVersion);
     }
 }

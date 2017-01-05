@@ -26,10 +26,10 @@ interface LinksFactoryInterface
     public function createResourceLinks($pluralType, $id);
 
     /**
+     * @param string $pluralType
+     * @param string $id
      * @param string $name
-     * @param mixed $domainObject
-     * @param ResourceTransformerInterface $transformer
      * @return Links
      */
-    public function createRelationshipLinks($name, $domainObject, ResourceTransformerInterface $transformer);
+    public function createRelationshipLinks($pluralType, $id, $name);
 }

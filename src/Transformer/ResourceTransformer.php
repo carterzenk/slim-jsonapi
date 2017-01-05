@@ -2,13 +2,22 @@
 
 namespace CarterZenk\JsonApi\Transformer;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use CarterZenk\JsonApi\Model\Model;
+use CarterZenk\JsonApi\Model\StringHelper;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use WoohooLabs\Yin\JsonApi\Schema\Links;
+use WoohooLabs\Yin\JsonApi\Schema\Relationship\AbstractRelationship;
+use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToManyRelationship;
+use WoohooLabs\Yin\JsonApi\Schema\Relationship\ToOneRelationship;
 use WoohooLabs\Yin\JsonApi\Transformer\AbstractResourceTransformer;
 use WoohooLabs\Yin\JsonApi\Transformer\ResourceTransformerInterface;
 
 class ResourceTransformer extends AbstractResourceTransformer implements ResourceTransformerInterface
 {
+    use TypeTrait;
+
     /**
      * @var string
      */
@@ -20,54 +29,92 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
     protected $pluralType;
 
     /**
-     * @var string
+     * @var callable[]|null
      */
-    protected $idKey;
+    protected $attributes;
 
     /**
-     * @var string[]
+     * @var callable[]
      */
-    protected $hiddenAttributes;
-
-    /**
-     * @var string[]
-     */
-    protected $defaultIncludedRelationships;
-
-    /**
-     * @var string[]
-     */
-    protected $relationships;
+    protected $relationships = [];
 
     /**
      * @var LinksFactoryInterface
      */
     protected $linksFactory;
 
+    protected $container;
+
+    protected $foreignKeys;
+
     /**
      * ResourceTransformer constructor.
-     * @param string $type
-     * @param string $idKey
-     * @param array $hiddenAttributes
-     * @param array $defaultIncludedRelationships
-     * @param array $relationships
+     * @param ContainerInterface $container
      * @param LinksFactoryInterface $linksFactory
+     * @param Builder $builder
      */
     public function __construct(
-        $type,
-        $idKey,
-        array $hiddenAttributes,
-        array $defaultIncludedRelationships,
-        array $relationships,
-        LinksFactoryInterface $linksFactory
+        ContainerInterface $container,
+        LinksFactoryInterface $linksFactory,
+        Builder $builder
     ) {
-        $this->type = $type;
-        $this->pluralType = Str::plural($type);
-        $this->idKey = $idKey;
-        $this->hiddenAttributes = $hiddenAttributes;
-        $this->defaultIncludedRelationships = $defaultIncludedRelationships;
-        $this->relationships = $relationships;
+        $this->type = $builder->getType();
+        $this->pluralType = $builder->getPluralType();
+        $this->foreignKeys = $builder->getForeignKeys();
+        $this->relationships = $builder->getRelations();
+
         $this->linksFactory = $linksFactory;
+        $this->container = $container;
+
+        $this->setRelationshipsTransformer($builder->getRelations());
+    }
+
+    private function setRelationshipsTransformer(array $relationMethods)
+    {
+        foreach ($relationMethods as $name => $relation) {
+            $keyName = StringHelper::slugCase($name);
+            $this->relationships[$keyName] = $this->getRelationshipCallable($relation, $name, $keyName);
+        }
+    }
+
+    private function getRelationshipCallable(Relation $relation, $name, $keyName)
+    {
+        return function (Model $domainObject) use ($name, $keyName, $relation) {
+            $relationship = $this->createRelationshipFromRelation($relation);
+
+            $relationship->setLinks($this->linksFactory->createRelationshipLinks(
+                $this->pluralType,
+                $this->getId($domainObject),
+                $keyName
+            ));
+
+            $transformer = $this->container->get($relation->getRelated());
+
+            if ($domainObject->relationLoaded($name)) {
+                $relationship->setData($domainObject->$name, $transformer);
+            } else {
+                $relationship
+                    ->setDataAsCallable(function () use ($domainObject, $name) {
+                        return $domainObject->$name;
+                    }, $transformer)
+                    ->omitWhenNotIncluded();
+            }
+
+            return $relationship;
+        };
+    }
+
+    /**
+     * @param Relation $relation
+     * @return AbstractRelationship
+     */
+    private function createRelationshipFromRelation(Relation $relation)
+    {
+        if (($relation instanceof HasOne) || ($relation instanceof BelongsTo)) {
+            return ToOneRelationship::create();
+        } else {
+            return ToManyRelationship::create();
+        }
     }
 
     /**
@@ -79,11 +126,12 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
     }
 
     /**
-     * @inheritdoc
+     * @param Model $domainObject
+     * @return string
      */
     public function getId($domainObject)
     {
-        return $domainObject->{$this->idKey};
+        return $domainObject->getKey();
     }
 
     /**
@@ -95,47 +143,44 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
     }
 
     /**
-     * @inheritdoc
+     * @param Model $domainObject
+     * @return Links
      */
     public function getLinks($domainObject)
     {
         return $this->linksFactory->createResourceLinks(
             $this->pluralType,
-            $this->getId($domainObject)
+            $domainObject->getKey()
         );
     }
 
     /**
-     * @inheritdoc
+     * @param Model $domainObject
+     * @return callable[]
      */
     public function getAttributes($domainObject)
     {
-        if (!$domainObject instanceof Model) {
-            return [];
+        if (is_null($this->attributes)) {
+            $this->setAttributes($domainObject);
         }
 
-        return $this->getModelAttributes($domainObject);
+        return $this->attributes;
     }
 
-    /**
-     * @param Model $model
-     * @return array
-     */
-    protected function getModelAttributes(Model $model)
+    private function setAttributes(Model $domainObject)
     {
-        $attributes = [];
+        $this->attributes = [];
 
-        foreach ($model->attributesToArray() as $key => $value) {
-            if (in_array($key, $this->hiddenAttributes)) {
-                continue;
-            }
+        $domainObject->makeHidden($domainObject->getKeyName());
+        $domainObject->makeHidden($this->foreignKeys);
 
-            $attributes[$key] = function ($domainObject) use ($value) {
-                return $value;
+        $attributeKeys = array_keys($domainObject->attributesToArray());
+
+        foreach ($attributeKeys as $attributeKey) {
+            $this->attributes[$attributeKey] = function ($domainObject) use ($attributeKey) {
+                return $domainObject->$attributeKey;
             };
         }
-
-        return $attributes;
     }
 
     /**
@@ -143,7 +188,7 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
      */
     public function getDefaultIncludedRelationships($domainObject)
     {
-        return $this->defaultIncludedRelationships;
+        return [];
     }
 
     /**
