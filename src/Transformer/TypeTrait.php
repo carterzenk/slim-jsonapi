@@ -21,7 +21,7 @@ trait TypeTrait
             return $resourceType;
         } else {
             // By default, use a slug-cased string representing the model's class.
-            $reflection = new \ReflectionClass($this->model);
+            $reflection = new \ReflectionClass($model);
             return StringHelper::slugCase($reflection->getShortName());
         }
     }
