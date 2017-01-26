@@ -3,7 +3,7 @@
 namespace CarterZenk\JsonApi\Transformer;
 
 use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
-use Illuminate\Database\Eloquent\Model;
+use CarterZenk\JsonApi\Model\Model;
 use Pimple\Container as PimpleContainer;
 
 class Container extends PimpleContainer implements ContainerInterface

@@ -5,6 +5,7 @@ namespace CarterZenk\JsonApi\Controller;
 use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Exceptions\Forbidden;
+use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
 use CarterZenk\JsonApi\Exceptions\ResourceNotFound;
 use CarterZenk\JsonApi\Hydrator\ModelHydrator;
 use CarterZenk\JsonApi\Model\Model;
@@ -29,7 +30,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     public function __construct(
         DocumentFactoryInterface $documentFactory,
         ExceptionFactoryInterface $exceptionFactory,
-        FetchingBuilder $fetchingBuilder,
+        FetchingBuilderInterface $fetchingBuilder,
         ModelHydrator $modelHydrator
     ) {
         $this->documentFactory = $documentFactory;
@@ -43,34 +44,29 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
      *
      * @return Builder
      */
-    protected abstract function getQueryForFetching();
+    protected abstract function getBuilder();
 
     /**
      * Returns an Eloquent Model.
-     *
      * @return Model
+     * @throws \CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException
      */
-    protected abstract function getModel();
-
-    protected function beforeCreate(Model $model, RequestInterface $request)
+    public function getModel()
     {
-        return $model;
-    }
+        $model = $this->getBuilder()->getModel();
 
-    protected function beforeSave(Model $model)
-    {
-        return $model;
-    }
+        if ($model instanceof Model)
+        {
+            return $model;
+        }
 
-    protected function afterSave(Model $model)
-    {
-        return $model;
+        throw new InvalidDomainObjectException($model);
     }
 
     public function listResourceAction(JsonApi $jsonApi)
     {
         $builder = $this->fetchingBuilder->applyQueryParams(
-            $this->getQueryForFetching(),
+            $this->getBuilder(),
             $jsonApi->getRequest()
         );
 
@@ -87,7 +83,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     public function findResourceAction(JsonApi $jsonApi, $id)
     {
         try {
-            $result = $this->getQueryForFetching()->findOrFail($id);
+            $result = $this->getBuilder()->findOrFail($id);
         } catch (ModelNotFoundException $exception) {
             throw new ResourceNotFound();
         }
@@ -101,11 +97,11 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     {
         $relationMethodName = StringHelper::camelCase($relationship);
 
-        if ($this->getModel()->isVisible($relationMethodName) === false) {
+        if ($this->getModel()->isRelationshipVisible($relationMethodName) === false) {
             throw new RelationshipNotExists($relationship);
         }
 
-        $builder = $this->fetchingBuilder->applyIncludedRelationship($this->getQueryForFetching(), $relationship);
+        $builder = $this->fetchingBuilder->applyIncludedRelationship($this->getBuilder(), $relationship);
 
         try {
             $result = $builder->findOrFail($id);
@@ -124,7 +120,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     {
         $relationMethodName = StringHelper::camelCase($relationship);
 
-        if ($this->getModel()->isVisible($relationMethodName) === false) {
+        if ($this->getModel()->isRelationshipVisible($relationMethodName) === false) {
             throw new RelationshipNotExists($relationship);
         }
 
@@ -153,15 +149,8 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     {
         $model = $this->getModel();
 
-        $model = $this->beforeCreate($model, $jsonApi->getRequest());
-
         $model = $jsonApi->hydrate($this->modelHydrator, $model);
-
-        $model = $this->beforeSave($model);
-
         $model->push();
-
-        $model = $this->afterSave($model);
 
         $document = $this->createResourceDocument($jsonApi, $model);
 
@@ -169,45 +158,16 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
 
     }
 
-    public function createRelatedResourceAction(JsonApi $jsonApi, $id, $relationship)
+    public function createRelationshipAction(JsonApi $jsonApi, $id, $relationship)
     {
         $relationMethodName = StringHelper::camelCase($relationship);
-        $model = $this->getModel();
 
-        if ($model->isVisible($relationMethodName) === false) {
-            throw new RelationshipNotExists($relationship);
-        }
-
-        if ($model->isAssignable($relationMethodName) === false) {
+        if ($this->getModel()->isRelationshipFillable($relationMethodName) === false) {
             throw new Forbidden();
         }
 
         try {
-            $result = $this->getQueryForFetching()->findOrFail($id);
-        } catch (RelationNotFoundException $exception) {
-            throw new RelationshipNotExists($relationship);
-        } catch (ModelNotFoundException $exception) {
-            throw new ResourceNotFound();
-        }
-
-        $relation = $result->$relationMethodName();
-
-        $relatedModel = $relation->getRelated();
-
-        $relatedModel = $jsonApi->hydrate($this->modelHydrator, $relatedModel);
-
-        $relation->save($relatedModel);
-
-        $document = $this->createResourceDocument($jsonApi, $relatedModel);
-
-        return $jsonApi->respond()->ok($document, $relatedModel);
-
-    }
-
-    public function createRelationshipAction(JsonApi $jsonApi, $id, $relationship)
-    {
-        try {
-            $model = $this->getQueryForFetching()->findOrFail($id);
+            $model = $this->getBuilder()->findOrFail($id);
         } catch (RelationNotFoundException $exception) {
             throw new RelationshipNotExists($relationship);
         } catch (ModelNotFoundException $exception) {
@@ -215,12 +175,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
         }
 
         $model = $jsonApi->hydrateRelationship($relationship, $this->modelHydrator, $model);
-
-        $this->beforeSave($model);
-
         $model->push();
-
-        $this->afterSave($model);
 
         $document = $this->createResourceDocument($jsonApi, $model);
 
@@ -230,60 +185,13 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     public function updateResourceAction(JsonApi $jsonApi, $id)
     {
         try {
-            $model = $this->getQueryForFetching()->findOrFail($id);
+            $model = $this->getBuilder()->findOrFail($id);
         } catch (ModelNotFoundException $exception) {
             throw new ResourceNotFound();
         }
 
         $model = $jsonApi->hydrate($this->modelHydrator, $model);
-
-        $this->beforeSave($model);
-
         $model->push();
-
-        $this->afterSave($model);
-
-        $document = $this->createResourceDocument($jsonApi, $model);
-
-        return $jsonApi->respond()->ok($document, $model);
-    }
-
-    public function updateRelatedResourceAction(JsonApi $jsonApi, $id, $relationship)
-    {
-        $relationMethodName = StringHelper::camelCase($relationship);
-        $model = $this->getModel();
-
-        if ($model->isVisible($relationMethodName) === false) {
-            throw new RelationshipNotExists($relationship);
-        }
-
-        if ($model->isAssignable($relationMethodName) === false) {
-            throw new Forbidden();
-        }
-
-        $builder = $this->fetchingBuilder->applyIncludedRelationship($this->getQueryForFetching(), $relationship);
-
-        try {
-            $model = $builder->findOrFail($id);
-        } catch (RelationNotFoundException $exception) {
-            throw new RelationshipNotExists($relationship);
-        } catch (ModelNotFoundException $exception) {
-            throw new ResourceNotFound();
-        }
-
-        $relatedResource = $model->$relationMethodName;
-
-        if (is_null($relatedResource)) {
-            throw new ResourceNotFound();
-        }
-
-        $model = $jsonApi->hydrate($this->modelHydrator, $model);
-
-        $this->beforeSave($model);
-
-        $model->push();
-
-        $this->afterSave($model);
 
         $document = $this->createResourceDocument($jsonApi, $model);
 
@@ -292,28 +200,69 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
 
     public function updateRelationshipAction(JsonApi $jsonApi, $id, $relationship)
     {
-        // TODO: Implement updateRelationshipAction() method.
+        $relationMethodName = StringHelper::camelCase($relationship);
+
+        if ($this->getModel()->isRelationshipFillable($relationMethodName) === false) {
+            throw new Forbidden();
+        }
+
+        try {
+            $model = $this->getBuilder()->findOrFail($id);
+        } catch (RelationNotFoundException $exception) {
+            throw new RelationshipNotExists($relationship);
+        } catch (ModelNotFoundException $exception) {
+            throw new ResourceNotFound();
+        }
+
+        $model = $jsonApi->hydrateRelationship($relationship, $this->modelHydrator, $model);
+        $model->push();
+
+        $document = $this->createResourceDocument($jsonApi, $model);
+
+        return $jsonApi->respond()->ok($document, $model);
     }
 
     public function deleteResourceAction(JsonApi $jsonApi, $id)
     {
-        // TODO: Implement deleteResourceAction() method.
-    }
+        try {
+            $model = $this->getBuilder()->findOrFail($id);
+        } catch (ModelNotFoundException $exception) {
+            throw new ResourceNotFound();
+        }
 
-    public function deleteRelatedResourceAction(JsonApi $jsonApi, $id, $relationship)
-    {
-        // TODO: Implement deleteRelatedResourceAction() method.
+        $model->delete();
+
+        return $jsonApi->respond()->noContent();
     }
 
     public function deleteRelationshipAction(JsonApi $jsonApi, $id, $relationship)
     {
-        // TODO: Implement deleteRelationshipAction() method.
+        $relationMethodName = StringHelper::camelCase($relationship);
+
+        if ($this->getModel()->isRelationshipFillable($relationMethodName) === false) {
+            throw new Forbidden();
+        }
+
+        try {
+            $model = $this->getBuilder()->findOrFail($id);
+        } catch (RelationNotFoundException $exception) {
+            throw new RelationshipNotExists($relationship);
+        } catch (ModelNotFoundException $exception) {
+            throw new ResourceNotFound();
+        }
+
+        $model = $jsonApi->hydrateRelationship($relationship, $this->modelHydrator, $model);
+        $model->push();
+
+        $document = $this->createResourceDocument($jsonApi, $model);
+
+        return $jsonApi->respond()->ok($document, $model);
     }
 
     protected function createResourceDocument(JsonApi $jsonApi, Model $model)
     {
         return $this->documentFactory->createResourceDocument(
-            $jsonApi->getRequest()->getUri(),
+            $jsonApi->getRequest(),
             $model
         );
     }
@@ -321,7 +270,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     protected function createCollectionDocument(JsonApi $jsonApi)
     {
         return $this->documentFactory->createCollectionDocument(
-            $jsonApi->getRequest()->getUri(),
+            $jsonApi->getRequest(),
             $this->getModel()
         );
     }

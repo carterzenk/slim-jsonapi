@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 
 class Builder implements BuilderInterface
 {
-    use RelationshipHelperTrait;
+    //use RelationshipHelperTrait;
     use TypeTrait;
 
     /**
@@ -116,7 +116,7 @@ class Builder implements BuilderInterface
 
             $relation = $model->$methodName();
 
-            if ($relation instanceof Relation && $model->isVisible($methodName)) {
+            if ($relation instanceof Relation && $model->isRelationshipVisible($methodName)) {
                 $this->relations[$methodName] = $relation;
             }
 

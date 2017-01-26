@@ -13,9 +13,9 @@ class JsonApiSerializer extends AbstractSerializer
      * JsonApiSerializerSerializer constructor.
      * @param $serializerOptions
      */
-    public function __construct($serializerOptions)
+    public function __construct($serializerOptions = null)
     {
-        $this->serializerOptions = $serializerOptions === null ? 0 : $serializerOptions;
+        $this->serializerOptions = $serializerOptions ?: 0;
     }
 
     /**

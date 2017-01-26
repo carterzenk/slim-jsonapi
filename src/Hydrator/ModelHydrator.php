@@ -9,7 +9,7 @@ use CarterZenk\JsonApi\Hydrator\Relationship\Factory\RelationshipHydratorFactory
 use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
-use Illuminate\Database\Eloquent\Model;
+use CarterZenk\JsonApi\Model\Model;
 use Illuminate\Support\Arr;
 use WoohooLabs\Yin\JsonApi\Exception\ExceptionFactoryInterface;
 use WoohooLabs\Yin\JsonApi\Hydrator\HydratorInterface;
@@ -36,10 +36,11 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
 
     /**
      * ModelHydrator constructor.
+     * @param RelationshipHydratorFactoryInterface $relationshipHydratorFactory
      */
-    public function __construct()
+    public function __construct(RelationshipHydratorFactoryInterface $relationshipHydratorFactory = null)
     {
-        $this->relationshipHydratorFactory = new RelationshipHydratorFactory();
+        $this->relationshipHydratorFactory = $relationshipHydratorFactory ?: new RelationshipHydratorFactory();
     }
 
     /**
@@ -224,9 +225,7 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
             throw $this->exceptionFactory->createRelationshipNotExists($relationshipName);
         }
 
-        if (method_exists($domainObject, 'isRelationFillable') &&
-            $domainObject->isRelationFillable($relationMethodName) === false
-        ) {
+        if ($domainObject->isRelationshipFillable($relationMethodName) === false) {
             throw new RelationshipUpdateNotAllowed($relationshipName);
         }
     }

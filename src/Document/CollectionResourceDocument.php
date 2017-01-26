@@ -3,10 +3,9 @@
 namespace CarterZenk\JsonApi\Document;
 
 use WoohooLabs\Yin\JsonApi\Schema\Data\CollectionData;
-use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Transformer\Transformation;
 
-class CollectionResourceDocument extends AbstractSuccessDocument
+class CollectionResourceDocument extends AbstractSuccessfulDocument
 {
     /**
      * @inheritdoc
@@ -71,7 +70,7 @@ class CollectionResourceDocument extends AbstractSuccessDocument
     /**
      * @inheritdoc
      */
-    public function getRelationshipContent(
+    public function getRelationshipContentInternal(
         $relationshipName,
         Transformation $transformation,
         array $additionalMeta = []

@@ -17,7 +17,7 @@ class User extends BaseModel
         'updated_at',
     ];
 
-    protected $fillableRelations = [
+    protected $fillableRelationships = [
         'organizations',
         'assignedContacts',
         'otherOrganizations',
@@ -30,10 +30,6 @@ class User extends BaseModel
         'activeContact',
         'organizations',
         'otherOrganizations'
-    ];
-
-    protected $fullyReplaceableRelations = [
-        'organizations'
     ];
 
     public function ownedContacts()

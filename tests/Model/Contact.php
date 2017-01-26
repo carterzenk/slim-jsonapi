@@ -39,7 +39,12 @@ class Contact extends BaseModel
         'assignee'
     ];
 
-    protected $fillableRelations = [
+    protected $visibleRelationships = [
+        'owner',
+        'assignee'
+    ];
+
+    protected $fillableRelationships = [
         'assignee'
     ];
 

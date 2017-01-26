@@ -6,7 +6,7 @@ use WoohooLabs\Yin\JsonApi\Schema\Data\SingleResourceData;
 use WoohooLabs\Yin\JsonApi\Schema\Link;
 use WoohooLabs\Yin\JsonApi\Transformer\Transformation;
 
-class SingleResourceDocument extends AbstractSuccessDocument
+class SingleResourceDocument extends AbstractSuccessfulDocument
 {
     /**
      * @inheritdoc
@@ -54,6 +54,23 @@ class SingleResourceDocument extends AbstractSuccessDocument
 
         $transformation->data->addPrimaryResource(
             $transformer->transformToResource($transformation, $this->domainObject)
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getRelationshipContentInternal(
+        $relationshipName,
+        Transformation $transformation,
+        array $additionalMeta = []
+    ) {
+        $transformer = $this->container->get($this->modelClass);
+        return $transformer->transformRelationship(
+            $relationshipName,
+            $transformation,
+            $this->domainObject,
+            $additionalMeta
         );
     }
 }

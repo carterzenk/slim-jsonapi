@@ -4,9 +4,14 @@ namespace CarterZenk\Tests\JsonApi\Model;
 
 class Comment extends BaseModel
 {
+    protected $resourceType = 'words';
+
     protected $fillable = [
         'name',
-        'id',
+        'id'
+    ];
+
+    protected $fillableRelationships = [
         'someInsaneMethod'
     ];
 

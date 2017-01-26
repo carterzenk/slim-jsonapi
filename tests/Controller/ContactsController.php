@@ -2,10 +2,10 @@
 
 namespace CarterZenk\Tests\JsonApi\Controller;
 
-use CarterZenk\JsonApi\Controller\JsonApiController;
+use CarterZenk\JsonApi\Controller\AbstractJsonApiController;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 
-class ContactsController extends JsonApiController
+class ContactsController extends AbstractJsonApiController
 {
     public function getBuilder()
     {

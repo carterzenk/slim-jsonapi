@@ -3,6 +3,8 @@
 namespace CarterZenk\Tests\JsonApi\App;
 
 use CarterZenk\JsonApi\App\App;
+use CarterZenk\JsonApi\Controller\FetchingBuilder;
+use CarterZenk\JsonApi\Controller\FetchingBuilderInterface;
 use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\JsonApi\Document\DocumentFactoryInterface;
 use CarterZenk\JsonApi\Encoder\EncoderInterface;
@@ -110,6 +112,16 @@ class SlimInstance
             );
         };
 
+        $container[FetchingBuilderInterface::class] = function (ContainerInterface $container) {
+            return new FetchingBuilder(
+                $container->get(FilteringStrategyInterface::class)
+            );
+        };
+
+        $container[ModelHydrator::class] = function (ContainerInterface $container) {
+            return new ModelHydrator();
+        };
+
         $container[EncoderInterface::class] = function (ContainerInterface $container) {
             return new JsonApiEncoder(
                 $container->get(SerializerInterface::class),
@@ -122,9 +134,10 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new ContactsController(
-                $container->get(EncoderInterface::class),
+                $container->get(DocumentFactoryInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(FilteringStrategyInterface::class)
+                $container->get(FetchingBuilderInterface::class),
+                $container->get(ModelHydrator::class)
             );
         };
 
@@ -132,9 +145,10 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new UsersController(
-                $container->get(EncoderInterface::class),
+                $container->get(DocumentFactoryInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(FilteringStrategyInterface::class)
+                $container->get(FetchingBuilderInterface::class),
+                $container->get(ModelHydrator::class)
             );
         };
 
@@ -142,9 +156,10 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new EloquentModelController(
-                $container->get(EncoderInterface::class),
+                $container->get(DocumentFactoryInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
-                $container->get(FilteringStrategyInterface::class)
+                $container->get(FetchingBuilderInterface::class),
+                $container->get(ModelHydrator::class)
             );
         };
     }

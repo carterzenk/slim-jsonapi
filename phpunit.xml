@@ -11,8 +11,35 @@
 		 stopOnFailure="false"
 		 syntaxCheck="true">
 	<testsuites>
-		<testsuite name="JsonApi">
-			<directory>./tests/</directory>
+		<testsuite name="App">
+			<directory>./tests/App</directory>
+		</testsuite>
+		<testsuite name="Controller">
+			<directory>./tests/Controller</directory>
+		</testsuite>
+		<testsuite name="Document">
+			<directory>./tests/Document</directory>
+		</testsuite>
+		<testsuite name="Encoder">
+			<directory>./tests/Encoder</directory>
+		</testsuite>
+		<testsuite name="Exceptions">
+			<directory>./tests/Exceptions</directory>
+		</testsuite>
+		<testsuite name="Handlers">
+			<directory>./tests/Handlers</directory>
+		</testsuite>
+		<testsuite name="Hydrator">
+			<directory>./tests/Hydrator</directory>
+		</testsuite>
+		<testsuite name="Model">
+			<directory>./tests/Model</directory>
+		</testsuite>
+		<testsuite name="Strategy">
+			<directory>./tests/Strategy</directory>
+		</testsuite>
+		<testsuite name="Transformer">
+			<directory>./tests/Transformer</directory>
 		</testsuite>
 	</testsuites>
 	<filter>
@@ -21,7 +48,7 @@
 		</whitelist>
 	</filter>
 	<logging>
-		<log type="coverage-clover" target="./clover.xml"/>
+		<?log type="coverage-clover" target="./clover.xml"?>
 	</logging>
 
 </phpunit>

@@ -49,14 +49,6 @@ interface JsonApiControllerInterface
      * @param string $relationship
      * @return ResponseInterface
      */
-    public function createRelatedResourceAction(JsonApi $jsonApi, $id, $relationship);
-
-    /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
-     * @return ResponseInterface
-     */
     public function createRelationshipAction(JsonApi $jsonApi, $id, $relationship);
 
     /**
@@ -72,14 +64,6 @@ interface JsonApiControllerInterface
      * @param string $relationship
      * @return ResponseInterface
      */
-    public function updateRelatedResourceAction(JsonApi $jsonApi, $id, $relationship);
-
-    /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
-     * @return ResponseInterface
-     */
     public function updateRelationshipAction(JsonApi $jsonApi, $id, $relationship);
 
     /**
@@ -88,14 +72,6 @@ interface JsonApiControllerInterface
      * @return ResponseInterface
      */
     public function deleteResourceAction(JsonApi $jsonApi, $id);
-
-    /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
-     * @return ResponseInterface
-     */
-    public function deleteRelatedResourceAction(JsonApi $jsonApi, $id, $relationship);
 
     /**
      * @param JsonApi $jsonApi

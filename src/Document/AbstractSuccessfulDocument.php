@@ -21,9 +21,14 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     protected $domainObject;
 
     /**
-     * @var Model
+     * @var string
      */
-    protected $model;
+    protected $modelClass;
+
+    /**
+     * @var string|null
+     */
+    protected $jsonApiVersion;
 
     /**
      * @var Container
@@ -41,22 +46,17 @@ abstract class AbstractSuccessfulDocument extends AbstractDocument
     protected $linksFactory;
 
     /**
-     * @var string|null
-     */
-    protected $jsonApiVersion;
-
-    /**
      * AbstractSuccessfulDocument constructor.
-     * @param Model $model
      * @param RequestInterface $request
-     * @param $jsonApiVersion
+     * @param string $modelClass
+     * @param string $jsonApiVersion
      */
     public function __construct(
-        Model $model,
         RequestInterface $request,
+        $modelClass,
         $jsonApiVersion
     ) {
-        $this->model = $model;
+        $this->modelClass = $modelClass;
         $this->request = $request;
         $this->jsonApiVersion = $jsonApiVersion;
 

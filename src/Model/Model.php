@@ -14,18 +14,19 @@ class Model extends Eloquent
     protected $relationMethods;
 
     /**
-     * The relationships that are mass assignable.
-     *
      * @var array
      */
-    protected $assignable = [];
+    protected $fillableRelationships = [];
 
     /**
-     * The relationships that are fully replaceable.
-     *
      * @var array
      */
-    protected $replaceable = [];
+    protected $visibleRelationships = [];
+
+    /**
+     * @var string|null
+     */
+    protected $resourceType;
 
     /**
      * Get the relation methods defined in the model.
@@ -38,114 +39,74 @@ class Model extends Eloquent
     }
 
     /**
-     * Get the mass-assignable relations for the model.
-     *
-     * @return array
+     * @inheritdoc
      */
-    public function getAssignable()
+    public function getFillableRelationships()
     {
-        return $this->assignable;
+        return $this->fillableRelationships;
     }
 
     /**
-     * Set the assignable relationships for the model.
+     * Returns a boolean indicating whether or not the relationship is fillable.
      *
-     * @param array $assignable
-     * @return $this
-     */
-    public function setAssignable(array $assignable)
-    {
-        $this->assignable = $assignable;
-
-        return $this;
-    }
-
-    /**
-     * Add assignable relationships for the model.
-     *
-     * @param array|string|null $relations
-     * @return void
-     */
-    public function addAssignable($relations = null)
-    {
-        $relations = is_array($relations) ? $relations : func_get_args();
-
-        $this->assignable = array_merge($this->assignable, $relations);
-    }
-
-    /**
-     * Get the fully-replaceable relations for the model.
-     *
-     * @return array
-     */
-    public function getReplaceable()
-    {
-        return $this->replaceable;
-    }
-
-    /**
-     * Set the fully-replaceable relations for the model.
-     *
-     * @param array $replaceable
-     * @return $this
-     */
-    public function setReplaceable(array $replaceable)
-    {
-        $this->replaceable = $replaceable;
-
-        return $this;
-    }
-
-    /**
-     * Determine if the given relationship may be mass assigned.
-     *
-     * @param $key
+     * @param $name
      * @return bool
      */
-    public function isAssignable($key)
+    public function isRelationshipFillable($name)
     {
-        if (static::$unguarded) {
-            return true;
-        }
-
-        if (in_array($key, $this->getAssignable())) {
-            return true;
-        }
-
-        if ($this->isGuarded($key)) {
-            return false;
-        }
-
-        return empty($this->getAssignable());
+        return in_array($name, $this->fillableRelationships);
     }
 
     /**
-     * Determine if the given attribute/relationship is visible.
-     *
-     * @param $key
-     * @return bool
+     * @inheritdoc
      */
-    public function isVisible($key)
+    public function getVisibleRelationships()
     {
-        if (count($this->getVisible()) > 0) {
-            return array_key_exists($key, $this->getVisible());
-        }
-
-        if (count($this->getHidden()) > 0) {
-            return !array_key_exists($key, $this->getHidden());
-        }
-
-        return true;
+        return $this->visibleRelationships;
     }
 
     /**
-     * Determine if the given relationship is fully replaceable.
+     * Returns a boolean indicating whether or not the relationship is visible.
      *
-     * @param $key
+     * @param $name
      * @return bool
      */
-    public function isReplaceable($key)
+    public function isRelationshipVisible($name)
     {
-        return array_key_exists($key, $this->replaceable);
+        return in_array($name, $this->visibleRelationships);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function addFillableRelationship($name)
+    {
+        $this->fillableRelationships[] = $name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function removeFillableRelationship($name)
+    {
+        if (($key = array_search($name, $this->fillableRelationships)) !== false) {
+            unset($this->fillableRelationships[$key]);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getDefaultIncludedRelationships()
+    {
+        return $this->with;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getResourceType()
+    {
+        return $this->resourceType;
     }
 }

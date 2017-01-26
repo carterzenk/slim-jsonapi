@@ -61,7 +61,7 @@ class ResourceTransformer extends AbstractResourceTransformer implements Resourc
         $this->type = $builder->getType();
         $this->pluralType = $builder->getPluralType();
         $this->foreignKeys = $builder->getForeignKeys();
-        $this->relationships = $builder->getRelations();
+        //$this->relationships = $builder->getRelations();
 
         $this->linksFactory = $linksFactory;
         $this->container = $container;

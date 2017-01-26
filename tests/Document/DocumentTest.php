@@ -13,7 +13,7 @@ use WoohooLabs\Yin\JsonApi\Schema\JsonApi;
 
 class DocumentTest extends BaseTestCase
 {
-    private function getDocument($jsonApiVersion = null, Model $model)
+    private function getDocument($jsonApiVersion = null, $modelClass)
     {
         $documentFactory = new DocumentFactory($jsonApiVersion);
         $exceptionFactory = new DefaultExceptionFactory();
@@ -28,27 +28,19 @@ class DocumentTest extends BaseTestCase
 
         $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
 
-        return $documentFactory->createResourceDocument($model, $request);
+        return $documentFactory->createResourceDocument($request, $modelClass);
     }
 
     public function testNoJsonApiVersion()
     {
-        $document = $this->getDocument(null, new Contact());
-
-        $meta = ['test' => 'test'];
-        $resource = Contact::find(1);
-
-        $document->getMetaContent($resource, $meta);
-
-        $id = $document->getResourceId();
-        $this->assertEquals(1, $id);
+        $document = $this->getDocument(null, Contact::class);
 
         $this->assertNull($document->getJsonApi());
     }
 
     public function testWithJsonApiVersion()
     {
-        $document = $this->getDocument('1.0', new Contact());
+        $document = $this->getDocument('1.0', Contact::class);
 
         $jsonApi = $document->getJsonApi();
         $this->assertInstanceOf(JsonApi::class, $jsonApi);
@@ -59,7 +51,7 @@ class DocumentTest extends BaseTestCase
 
     public function testLinksWithPort()
     {
-        $document = $this->getDocument(null, new Contact());
+        $document = $this->getDocument(null, Contact::class);
         $links = $document->getLinks();
 
         $this->assertEquals('/leads', $links->getSelf()->getHref());
