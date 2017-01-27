@@ -38,7 +38,7 @@ class HasOneHydrator extends AbstractToOneHydrator
      */
     protected function hydrateForUpdate(ExceptionFactoryInterface $exceptionFactory, $relationship)
     {
-        if ($relationship->isEmpty() || $this->relation->getResults() !== null) {
+        if ($relationship->isEmpty()) {
             throw $exceptionFactory->createRemovalProhibitedException($this->name);
         } else {
             $this->saveRelatedFromRelationship($relationship);

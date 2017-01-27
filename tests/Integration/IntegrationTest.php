@@ -67,17 +67,32 @@ class IntegrationTest extends WebTestCase
         $attributes = $document['data']['attributes'];
 
         // Check attributes
-        $this->assertArraySubset($attributes, $contact->getAttributes());
+        $this->assertEquals([
+            'f_name' => $contact->f_name,
+            'l_name' => $contact->l_name,
+            'email' => $contact->email,
+            'title' => $contact->title,
+            'phone' => $contact->phone,
+            'phone_cell' => $contact->phone_cell,
+            'phone_office' => $contact->phone_office,
+            'address' => $contact->address,
+            'city' => $contact->city,
+            'state' => $contact->state,
+            'zip' => $contact->zip,
+            'birthday' => $contact->birthday
+        ], $attributes);
 
         // Check relationships
         $this->assertArrayHasKey('relationships', $document['data']);
         $relationships = $document['data']['relationships'];
-        $this->assertEquals(2, count($relationships));
+        $this->assertEquals(3, count($relationships));
         $this->assertArrayHasKey('owner', $relationships);
         $this->assertArrayHasKey('assignee', $relationships);
+        $this->assertArrayHasKey('active-user', $relationships);
         $this->assertArrayHasKey('data', $relationships['assignee']);
         $this->assertArrayHasKey('links', $relationships['assignee']);
         $this->assertArrayHasKey('links', $relationships['owner']);
+        $this->assertArrayHasKey('links', $relationships['active-user']);
         $this->assertEquals(2, count($relationships['owner']['links']));
         $this->assertArrayHasKey('self', $relationships['owner']['links']);
         $this->assertArrayHasKey('related', $relationships['owner']['links']);
@@ -298,8 +313,6 @@ class IntegrationTest extends WebTestCase
                 ]
             ]
         ]);
-
-        $this->dumpResponse();
 
         $this->assertEquals(201, $this->client->response->getStatusCode());
 

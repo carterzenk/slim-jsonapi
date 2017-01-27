@@ -203,27 +203,6 @@ class HydratorTest extends BaseTestCase
         $this->hydrate($contact, $request);
     }
 
-    public function testHydrateHasOneRelationshipForCreate()
-    {
-        $data = [
-            'data' => [
-                'type' => 'user',
-                'relationships' => [
-                    'active-contact' => [
-                        'data' => [
-                            'type' => 'contact',
-                            'id' => '1'
-                        ]
-                    ]
-                ]
-            ]
-        ];
-
-        $request = $this->getRequest($data, 'POST');
-        $user = $this->hydrate(new User(), $request);
-        $this->assertEquals(1, $user->activeContact->id);
-    }
-
     public function testHydrateHasOneRelationshipForCreateWithInvalidId()
     {
         $data = [
@@ -245,16 +224,19 @@ class HydratorTest extends BaseTestCase
         $this->hydrate(new User(), $request);
     }
 
-    public function testHydrateEmptyHasOneRelationshipForUpdate()
+    public function testHydrateHasOneRelationshipForUpdateWithEmptyThrowsException()
     {
-        $user = Factory::create(User::class);
+        $contact = Factory::create(Contact::class);
+        $user = Factory::create(User::class, [
+            'active_id' => $contact->id
+        ]);
 
         $data = [
             'data' => [
-                'type' => 'user',
-                'id' => $user->id,
+                'type' => 'contact',
+                'id' => $contact->id,
                 'relationships' => [
-                    'active-contact' => [
+                    'active-user' => [
                         'data' => null
                     ]
                 ]
@@ -263,15 +245,17 @@ class HydratorTest extends BaseTestCase
 
         $request = $this->getRequest($data, 'PATCH');
         $this->expectException(RemovalProhibited::class);
-        $this->hydrate($user, $request);
+        $this->hydrate($contact, $request);
     }
 
-    public function testHydrateHasOneRelationshipForUpdateWithExisting()
+    public function testHydrateHasOneRelationshipForUpdateWithIdSetsRelationship()
     {
         $contact = Factory::create(Contact::class);
         $user = Factory::create(User::class, [
-            'active_id' => $contact->id
+            'active_id' => null
         ]);
+
+        $this->assertNull($user->activeContact);
 
         $data = [
             'data' => [
@@ -289,11 +273,12 @@ class HydratorTest extends BaseTestCase
         ];
 
         $request = $this->getRequest($data, 'PATCH');
-        $this->expectException(RemovalProhibited::class);
-        $this->hydrate($user, $request);
+        $user = $this->hydrate($user, $request);
+        $this->assertNotNull($user->activeContact);
+        $this->assertEquals($contact->id, $user->activeContact->id);
     }
 
-    public function testHydrateHasOneRelationshipForDelete()
+    public function testHydrateHasOneRelationshipForDeleteThrowsException()
     {
         $user = Factory::create(User::class);
 
@@ -309,7 +294,7 @@ class HydratorTest extends BaseTestCase
         $this->hydrateRelationship($user, $request, 'active-contact');
     }
 
-    public function testHydrateHasOneRelationshipWithInvalidType()
+    public function testHydrateHasOneRelationshipWithInvalidTypeThrowsException()
     {
         $user = Factory::create(User::class);
 
@@ -327,7 +312,7 @@ class HydratorTest extends BaseTestCase
         $this->hydrateRelationship($user, $request, 'active-contact');
     }
 
-    public function testHydrateHasManyRelationshipWithInvalidType()
+    public function testHydrateHasManyRelationshipWithInvalidTypeThrowsException()
     {
         $data = [
             'data' => [
@@ -349,7 +334,7 @@ class HydratorTest extends BaseTestCase
         $this->hydrate(new User(), $request);
     }
 
-    public function testHydrateHasManyRelationshipForUpdate()
+    public function testHydrateHasManyRelationshipForUpdateThrowsException()
     {
         $data = [
             'data' => [
@@ -388,7 +373,6 @@ class HydratorTest extends BaseTestCase
             ];
         }
 
-
         $data = [
             'data' => [
                 'type' => 'user',
@@ -410,24 +394,24 @@ class HydratorTest extends BaseTestCase
         }
     }
 
-    public function testHydrateHasManyRelationshipForDelete()
+    public function testHydrateHasManyRelationshipForDeleteThrowsException()
     {
         $data = [
             'data' => [
                 [
                     'type' => 'contact',
-                    'id' => '1'
+                    'id' => 1
                 ],
                 [
                     'type' => 'contact',
-                    'id' => '2'
+                    'id' => 2
                 ]
             ]
         ];
 
         $request = $this->getRequest($data, 'DELETE');
 
-        $this->expectException(RemovalProhibited::class);
+       $this->expectException(RemovalProhibited::class);
         $this->hydrateRelationship(new User(), $request, 'assigned-contacts');
     }
 

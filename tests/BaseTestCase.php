@@ -5,7 +5,7 @@ namespace CarterZenk\Tests\JsonApi;
 use PHPUnit\Framework\TestCase;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
-class BaseTestCase extends TestCase
+abstract class BaseTestCase extends TestCase
 {
     protected function getMockRequest()
     {

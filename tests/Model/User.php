@@ -8,7 +8,9 @@ class User extends BaseModel
     protected $primaryKey = 'id';
 
     protected $hidden = [
-        'password'
+        'password',
+        'created_at',
+        'updated_at'
     ];
 
     protected $guarded = [
