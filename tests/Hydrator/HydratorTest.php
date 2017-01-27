@@ -203,7 +203,7 @@ class HydratorTest extends BaseTestCase
         $this->hydrate($contact, $request);
     }
 
-    public function testHydrateHasOneRelationshipForCreateWithInvalidId()
+    public function testHydrateHasOneRelationshipForCreateWithInvalidIdThrowsException()
     {
         $data = [
             'data' => [
@@ -518,14 +518,15 @@ class HydratorTest extends BaseTestCase
         $this->assertEquals(1, $contact->assignee->id);
     }
 
-    public function testHydrateNullBelongsToRelationshipForUpdateRemovesRelated()
+    public function testHydrateEmptyBelongsToRelationshipForUpdateRemovesRelated()
     {
-        $contact = new Contact();
-        $user = User::find(1);
-        $contact->assignee()->associate($user);
-        $this->assertEquals(1, $contact->assignee->id);
-        $contact->push();
-        $contact->fresh();
+        $user = Factory::create(User::class);
+        $contact = Factory::create(Contact::class, [
+            'assigned_id' => $user->id
+        ]);
+
+        $this->assertNotNull($contact->assignee);
+        $this->assertEquals($user->id, $contact->assignee->id);
 
         $data = [
             'data' => [
@@ -586,13 +587,16 @@ class HydratorTest extends BaseTestCase
         $this->assertNotNull($user->organizations->find($organization4->id));
     }
 
-    public function testHydrateBelongsToManyRelationshipForUpdateClear()
+    public function testHydrateEmptyBelongsToManyRelationshipForUpdateRemovesAll()
     {
-        $user = new User();
-        $user->organizations()->attach(1);
-        $user->organizations()->attach(2);
-        $user->push();
-        $user->fresh();
+        $user = Factory::create(User::class);
+        $organization = Factory::create(Organization::class);
+        Factory::create(OrganizationUser::class, [
+            'user_id' => $user->id,
+            'org_id' => $organization->id
+        ]);
+
+        $this->assertEquals(1, $user->organizations()->count());
 
         $data = [
             'data' => [
@@ -609,7 +613,10 @@ class HydratorTest extends BaseTestCase
         $request = $this->getRequest($data, 'PATCH');
         $user = $this->hydrate($user, $request);
 
-        $this->assertEmpty($user->organizations);
+        $user->push();
+        $user->fresh('organizations');
+
+        $this->assertEquals(0, $user->organizations()->count());
     }
 
     public function testHydrateBelongsToManyRelationshipForUpdate()
