@@ -5,79 +5,85 @@ namespace CarterZenk\JsonApi\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\JsonApi;
+use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 interface JsonApiControllerInterface
 {
     /**
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @return ResponseInterface
      */
-    public function listResourceAction(JsonApi $jsonApi);
+    public function listResourceAction(RequestInterface $request, ResponseInterface $response);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function findResourceAction(JsonApi $jsonApi, $id);
+    public function findResourceAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function findRelationshipAction(JsonApi $jsonApi, $id, $relationship);
+    public function findRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function findRelatedResourceAction(JsonApi $jsonApi, $id, $relationship);
+    public function findRelatedResourceAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @return ResponseInterface
      */
-    public function createResourceAction(JsonApi $jsonApi);
+    public function createResourceAction(RequestInterface $request, ResponseInterface $response);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function createRelationshipAction(JsonApi $jsonApi, $id, $relationship);
+    public function createRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function updateResourceAction(JsonApi $jsonApi, $id);
+    public function updateResourceAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function updateRelationshipAction(JsonApi $jsonApi, $id, $relationship);
+    public function updateRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function deleteResourceAction(JsonApi $jsonApi, $id);
+    public function deleteResourceAction(RequestInterface $request, ResponseInterface $response, array $args);
 
     /**
-     * @param JsonApi $jsonApi
-     * @param string $id
-     * @param string $relationship
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     * @param array $args
      * @return ResponseInterface
      */
-    public function deleteRelationshipAction(JsonApi $jsonApi, $id, $relationship);
+    public function deleteRelationshipAction(RequestInterface $request, ResponseInterface $response, array $args);
 }

@@ -41,11 +41,13 @@ class Contact extends BaseModel
 
     protected $visibleRelationships = [
         'owner',
-        'assignee'
+        'assignee',
+        'activeUser'
     ];
 
     protected $fillableRelationships = [
-        'assignee'
+        'assignee',
+        'activeUser'
     ];
 
     public function owner()
@@ -56,6 +58,11 @@ class Contact extends BaseModel
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_id', 'id');
+    }
+
+    public function activeUser()
+    {
+        return $this->hasOne(User::class, 'active_id', 'id');
     }
 
     public function setFirstNameAttribute($firstName)

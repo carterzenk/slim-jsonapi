@@ -30,39 +30,10 @@ class CreateContactsTable extends Migration
             $table->string('zip', 15)->nullable();
             $table->integer('owner_id', false, true)->nullable();
             $table->integer('assigned_id', false, true)->nullable();
-            $table->integer('active_id', false, true)->nullable();
             $table->date('birthday')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
-
-        $faker = Factory::create();
-
-        for ($i = 0; $i < 50; $i++) {
-            $contact = new Contact();
-            $contact->setRawAttributes([
-                'f_name' => $faker->firstName,
-                'l_name' => $faker->lastName,
-                'email' => $faker->email,
-                'title' => $faker->title,
-                'phone' => $faker->phoneNumber,
-                'phone_cell' => $faker->phoneNumber,
-                'phone_office' => $faker->phoneNumber,
-                'address' => $faker->address,
-                'city' => $faker->city,
-                'state' => $faker->stateAbbr,
-                'zip' => $faker->postcode,
-                'birthday' => $faker->dateTimeBetween('-30 years', '-10 years'),
-                'created_at' => $faker->dateTimeBetween('-3 years', 'now'),
-                'updated_at' => $faker->dateTimeBetween('-3 years', 'now')
-            ]);
-
-            $contact->setAttribute('active_id', $faker->numberBetween(1, 5));
-            $contact->setAttribute('owner_id', $faker->numberBetween(1, 5));
-            $contact->setAttribute('assigned_id', $faker->numberBetween(1, 5));
-
-            $contact->save();
-        }
     }
 
     /**

@@ -37,7 +37,8 @@
     "monolog/monolog": "^1.18",
     "there4/slim-test-helpers": "^2.1.1",
     "fzaninotto/faker": "^1.6.0",
-    "illuminate/filesystem": "^5.3"
+    "illuminate/filesystem": "5.3",
+    "laracasts/testdummy": "^2.3"
   },
   "minimum-stability": "stable",
   "autoload": {

@@ -20,13 +20,6 @@ class CreateOrganizationUsersTable extends Migration
             $table->integer('user_id', false, true)->nullable();
             $table->timestamps();
         });
-
-        for ($i = 0; $i < 5; $i++) {
-            OrganizationUser::create([
-                'org_id' => $i,
-                'user_id' => $i
-            ]);
-        }
     }
 
     /**

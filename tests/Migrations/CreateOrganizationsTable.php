@@ -21,17 +21,6 @@ class CreateOrganizationsTable extends Migration
             $table->integer('type_id', false, true)->nullable();
             $table->timestamps();
         });
-
-        $faker = Factory::create();
-
-        for ($i = 0; $i < 5; $i++) {
-            Organization::create([
-                'name' => $faker->company,
-                'type_id' => $faker->numberBetween(0, 5),
-                'created_at' => $faker->dateTimeBetween('-3 years', 'now'),
-                'updated_at' => $faker->dateTimeBetween('-3 years', 'now')
-            ]);
-        }
     }
 
     /**

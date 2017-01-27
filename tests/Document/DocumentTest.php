@@ -6,12 +6,13 @@ use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 use Illuminate\Database\Eloquent\Model;
+use PHPUnit\Framework\TestCase;
 use Slim\Http\Environment;
 use Slim\Http\Request;
 use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
 use WoohooLabs\Yin\JsonApi\Schema\JsonApi;
 
-class DocumentTest extends BaseTestCase
+class DocumentTest extends TestCase
 {
     private function getDocument($jsonApiVersion = null, $modelClass)
     {

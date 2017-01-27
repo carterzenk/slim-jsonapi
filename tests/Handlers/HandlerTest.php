@@ -2,20 +2,45 @@
 
 namespace CarterZenk\Tests\JsonApi\Handlers;
 
+use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Exceptions\Forbidden;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
 use CarterZenk\JsonApi\Handlers\NotAllowedHandler;
 use CarterZenk\JsonApi\Handlers\NotFoundHandler;
 use CarterZenk\JsonApi\Handlers\PhpErrorHandler;
+use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use Psr\Http\Message\ResponseInterface;
-use Slim\Http\Request;
 use Slim\Http\Response;
 use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
 use WoohooLabs\Yin\JsonApi\Serializer\DefaultSerializer;
 
 class HandlerTest extends BaseTestCase
 {
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
+
+    /**
+     * @var ExceptionFactoryInterface
+     */
+    protected $exceptionFactory;
+
+    /**
+     * @var ResponseInterface
+     */
+    protected $response;
+
+    public function setUp()
+    {
+        parent::setUp();
+
+        $this->serializer = new DefaultSerializer();
+        $this->exceptionFactory = new DefaultExceptionFactory();
+        $this->response = new Response();
+    }
+
     public function testClassesExist()
     {
         $this->assertEquals(true, class_exists(ErrorHandler::class));
@@ -23,59 +48,43 @@ class HandlerTest extends BaseTestCase
 
     public function testErrorHandler()
     {
-        $serializer = new DefaultSerializer();
-        $errorHandler = new ErrorHandler($serializer, true);
-        $exceptionFactory = new DefaultExceptionFactory();
-        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
-        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
-        $response = new Response();
+        $errorHandler = new ErrorHandler($this->serializer, true);
+        $request = $this->getMockRequest();
 
-        $exception = $exceptionFactory->createResourceNotFoundException($request);
-        $exceptionResponse = $errorHandler($request, $response, $exception);
+        $exception = $this->exceptionFactory->createResourceNotFoundException($request);
+        $exceptionResponse = $errorHandler($request, new Response(), $exception);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
 
         $exception = new \Exception('Some default exception.');
-        $exceptionResponse = $errorHandler($request, $response, $exception);
+        $exceptionResponse = $errorHandler($request, new Response(), $exception);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
     }
 
     public function testPhpErrorHandler()
     {
-        $serializer = new DefaultSerializer();
-        $errorHandler = new PhpErrorHandler($serializer, true);
-        $exceptionFactory = new DefaultExceptionFactory();
-        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
-        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
-        $response = new Response();
+        $errorHandler = new PhpErrorHandler($this->serializer, true);
+        $request = $this->getMockRequest();
 
         $error = new \TypeError('This is a type error');
-        $exceptionResponse = $errorHandler($request, $response, $error);
+        $exceptionResponse = $errorHandler($request, $this->response, $error);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
     }
 
     public function testNotAllowedHandler()
     {
-        $serializer = new DefaultSerializer();
-        $errorHandler = new NotAllowedHandler($serializer, true);
-        $exceptionFactory = new DefaultExceptionFactory();
-        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
-        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
-        $response = new Response();
+        $errorHandler = new NotAllowedHandler($this->serializer, true);
+        $request = $this->getMockRequest();
 
-        $exceptionResponse = $errorHandler($request, $response, ['GET', 'PUT', 'PATCH']);
+        $exceptionResponse = $errorHandler($request, $this->response, ['GET', 'PUT', 'PATCH']);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
     }
 
     public function testNotFoundHandler()
     {
-        $serializer = new DefaultSerializer();
-        $errorHandler = new NotFoundHandler($serializer, true);
-        $exceptionFactory = new DefaultExceptionFactory();
-        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
-        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $exceptionFactory);
-        $response = new Response();
+        $errorHandler = new NotFoundHandler($this->serializer, true);
+        $request = $this->getMockRequest();
 
-        $exceptionResponse = $errorHandler($request, $response);
+        $exceptionResponse = $errorHandler($request, $this->response);
         $this->assertInstanceOf(ResponseInterface::class, $exceptionResponse);
     }
 

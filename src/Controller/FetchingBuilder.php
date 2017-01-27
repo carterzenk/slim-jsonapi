@@ -81,20 +81,10 @@ class FetchingBuilder implements FetchingBuilderInterface
         $relationshipNames = explode(",", $included);
 
         foreach ($relationshipNames as $relationship) {
-            $builder = $this->applyIncludedRelationship($builder, $relationship);
+            $builder = $builder->with(StringHelper::camelCase($relationship));
         }
 
         return $builder;
-    }
-
-    /**
-     * @param Builder $builder
-     * @param string $relationshipName
-     * @return Builder
-     */
-    public function applyIncludedRelationship(Builder $builder, $relationshipName)
-    {
-        return $builder->with(StringHelper::camelCase($relationshipName));
     }
 
     /**

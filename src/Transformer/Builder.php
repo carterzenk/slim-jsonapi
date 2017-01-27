@@ -40,6 +40,7 @@ class Builder implements BuilderInterface
     public function __construct(Model $model)
     {
         $this->type = $this->getModelType($model);
+        $this->relations = [];
 
         if ($model->getRelationMethods() !== null) {
             $relationMethods = $model->getRelationMethods();

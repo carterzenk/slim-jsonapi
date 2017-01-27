@@ -24,6 +24,11 @@ class User extends BaseModel
         'activeContact'
     ];
 
+    protected $visibleRelationships = [
+        'assignedContacts',
+        'ownedContacts'
+    ];
+
     protected $relationMethods = [
         'ownedContacts',
         'assignedContacts',
@@ -44,7 +49,7 @@ class User extends BaseModel
 
     public function activeContact()
     {
-        return $this->hasOne(Contact::class, 'active_id', 'id');
+        return $this->belongsTo(Contact::class, 'active_id', 'id');
     }
 
     public function organizations()

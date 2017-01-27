@@ -45,7 +45,7 @@ class JsonApiEncoder extends EloquentEncoder
      */
     protected function encodeModel(Model $model, RequestInterface $request, array $additionalMeta)
     {
-        $document = $this->documentFactory->createResourceDocument($model, $request);
+        $document = $this->documentFactory->createResourceDocument($request, $model);
 
         return $document->getResourceContent($this->exceptionFactory, $model, $additionalMeta);
     }
@@ -55,7 +55,7 @@ class JsonApiEncoder extends EloquentEncoder
      */
     protected function encodeCollection(Paginator $collection, Model $model, RequestInterface $request, array $additionalMeta)
     {
-        $document = $this->documentFactory->createCollectionDocument($model, $request);
+        $document = $this->documentFactory->createCollectionDocument($request, $model);
 
         return $document->getResourceContent($this->exceptionFactory, $collection, $additionalMeta);
     }
@@ -69,7 +69,7 @@ class JsonApiEncoder extends EloquentEncoder
         $relationshipName,
         array $additionalMeta
     ) {
-        $document = $this->documentFactory->createResourceDocument($model, $request);
+        $document = $this->documentFactory->createResourceDocument($request, $model);
 
         return $document->getRelationshipContent(
             $this->exceptionFactory,

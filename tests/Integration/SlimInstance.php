@@ -1,8 +1,7 @@
 <?php
 
-namespace CarterZenk\Tests\JsonApi\App;
+namespace CarterZenk\Tests\JsonApi\Integration;
 
-use CarterZenk\JsonApi\App\App;
 use CarterZenk\JsonApi\Controller\FetchingBuilder;
 use CarterZenk\JsonApi\Controller\FetchingBuilderInterface;
 use CarterZenk\JsonApi\Document\DocumentFactory;
@@ -11,9 +10,7 @@ use CarterZenk\JsonApi\Encoder\EncoderInterface;
 use CarterZenk\JsonApi\Encoder\JsonApiEncoder;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactory;
 use CarterZenk\JsonApi\Handlers\ErrorHandler;
-use CarterZenk\JsonApi\Hydrator\Hydrator;
 use CarterZenk\JsonApi\Hydrator\ModelHydrator;
-use CarterZenk\JsonApi\Hydrator\ResourceHydrator;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\JsonApi\Serializer\SerializerInterface;
 use CarterZenk\JsonApi\Strategy\Filtering\ColumnEqualsValue;
@@ -22,12 +19,10 @@ use CarterZenk\Tests\JsonApi\Controller\ContactsController;
 use CarterZenk\Tests\JsonApi\Controller\EloquentModelController;
 use CarterZenk\Tests\JsonApi\Controller\UsersController;
 use CarterZenk\Tests\JsonApi\Handlers\InvocationStrategy;
-use Illuminate\Filesystem\ClassFinder;
-use Illuminate\Filesystem\Filesystem;
 use Interop\Container\ContainerInterface;
+use Slim\App;
 use Slim\Interfaces\InvocationStrategyInterface;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
-use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 
 class SlimInstance
 {
@@ -39,7 +34,6 @@ class SlimInstance
         self::setDependencies($container);
 
         self::setRoutes($app);
-        self::migrateData();
 
         return $app;
     }
@@ -47,11 +41,6 @@ class SlimInstance
     private static function getSettings()
     {
         return [
-            'db' => [
-                'driver'    => 'sqlite',
-                'database'  => ':memory:',
-                'prefix'    => ''
-            ],
             'displayErrorDetails' => true,
             'outputBuffering' => false,
             'jsonApi' => [
@@ -59,19 +48,6 @@ class SlimInstance
                 'baseUrl' => 'http://localhost'
             ]
         ];
-    }
-
-    private static function migrateData()
-    {
-        $fileSystem = new Filesystem();
-        $classFinder = new ClassFinder();
-
-        foreach ($fileSystem->files(__DIR__.'/../Migrations') as $file) {
-            $fileSystem->requireOnce($file);
-            $migrationClass = $classFinder->findClass($file);
-            (new $migrationClass())->down();
-            (new $migrationClass())->up();
-        }
     }
 
     private static function setDependencies(ContainerInterface $container)
@@ -134,7 +110,7 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new ContactsController(
-                $container->get(DocumentFactoryInterface::class),
+                $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
                 $container->get(FetchingBuilderInterface::class),
                 $container->get(ModelHydrator::class)
@@ -145,7 +121,7 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new UsersController(
-                $container->get(DocumentFactoryInterface::class),
+                $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
                 $container->get(FetchingBuilderInterface::class),
                 $container->get(ModelHydrator::class)
@@ -156,7 +132,7 @@ class SlimInstance
             ContainerInterface $container
         ) {
             return new EloquentModelController(
-                $container->get(DocumentFactoryInterface::class),
+                $container->get(EncoderInterface::class),
                 $container->get(ExceptionFactoryInterface::class),
                 $container->get(FetchingBuilderInterface::class),
                 $container->get(ModelHydrator::class)
@@ -168,7 +144,7 @@ class SlimInstance
     {
         $app->get(
             '/contacts',
-            '\CarterZenk\Tests\JsonApi\Controller\ContactsController:indexResourceAction'
+            '\CarterZenk\Tests\JsonApi\Controller\ContactsController:listResourceAction'
         );
 
         $app->get(
@@ -183,7 +159,7 @@ class SlimInstance
 
         $app->get(
             '/users',
-            '\CarterZenk\Tests\JsonApi\Controller\UsersController:indexResourceAction'
+            '\CarterZenk\Tests\JsonApi\Controller\UsersController:listResourceAction'
         );
 
         $app->get(

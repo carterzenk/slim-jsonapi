@@ -3,7 +3,7 @@ namespace CarterZenk\Tests\JsonApi\Model;
 
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 
-class ModelTest extends \PHPUnit_Framework_TestCase
+class ModelTest extends BaseTestCase
 {
     public function testResourceType()
     {
@@ -16,7 +16,7 @@ class ModelTest extends \PHPUnit_Framework_TestCase
     public function testFillableRelationships()
     {
         $contact = new Contact();
-        $this->assertEquals(['assignee'], $contact->getFillableRelationships());
+        $this->assertEquals(['assignee', 'activeUser'], $contact->getFillableRelationships());
 
         $user = new User();
         $expected = [
@@ -49,7 +49,6 @@ class ModelTest extends \PHPUnit_Framework_TestCase
     public function testIsFillable()
     {
         $contact = new Contact();
-
         $this->assertTrue($contact->isRelationshipFillable('assignee'));
         $this->assertFalse($contact->isRelationshipFillable('owner'));
     }

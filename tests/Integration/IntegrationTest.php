@@ -1,26 +1,28 @@
 <?php
 
-namespace CarterZenk\Tests\JsonApi\App;
+namespace CarterZenk\Tests\JsonApi\Integration;
 
 use CarterZenk\JsonApi\App\App;
-use CarterZenk\JsonApi\Exceptions\BadRequest;
-use CarterZenk\JsonApi\Exceptions\RelatedResourceNotFound;
-use CarterZenk\JsonApi\Exceptions\ResourceNotExists;
+use CarterZenk\JsonApi\Exceptions\Forbidden;
+use CarterZenk\JsonApi\Exceptions\ResourceNotFound;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
-use CarterZenk\Tests\JsonApi\BaseTestCase;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 use CarterZenk\Tests\JsonApi\Model\User;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use WoohooLabs\Yin\JsonApi\Exception\ClientGeneratedIdNotSupported;
+use Laracasts\TestDummy\Factory;
+use There4\Slim\Test\WebTestCase;
 use WoohooLabs\Yin\JsonApi\Exception\RelationshipNotExists;
-use WoohooLabs\Yin\JsonApi\Exception\ResourceNotFound;
 use WoohooLabs\Yin\JsonApi\Exception\ResourceTypeMissing;
 
-class AppTest extends BaseTestCase
+class IntegrationTest extends WebTestCase
 {
     use TypeTrait;
+
+    public function getSlimInstance()
+    {
+        return SlimInstance::getInstance();
+    }
 
     private function getResponseContentAsArray()
     {
@@ -36,16 +38,6 @@ class AppTest extends BaseTestCase
         echo $body->getContents();
     }
 
-    public function testClassExists()
-    {
-        $this->assertEquals(true, class_exists(App::class));
-    }
-
-    public function testInit()
-    {
-        $this->assertInstanceOf(App::class, $this->app);
-    }
-
     public function testGetResponseAsString()
     {
         $this->client->get('/contacts/1');
@@ -56,54 +48,44 @@ class AppTest extends BaseTestCase
 
     public function testGetContactSuccess()
     {
-        $this->client->get('/contacts/1');
+        $contact = Factory::create(Contact::class);
+
+        $this->client->get('/contacts/'.$contact->id);
         $this->assertEquals(200, $this->client->response->getStatusCode());
 
         $document = $this->getResponseContentAsArray();
-        $contact = Contact::find(1);
+        $contact = Contact::find($contact->id);
 
-        // Check primary id.
-        $this->assertEquals('1', $document['data']['id']);
+        // Check primary id
+        $this->assertEquals($contact->id, $document['data']['id']);
 
         // Check primary type
         $this->assertEquals('contact', $document['data']['type']);
 
         // Check attributes
         $this->assertArrayHasKey('attributes', $document['data']);
-        $this->assertEquals($contact->f_name, $document['data']['attributes']['f_name']);
-        $this->assertEquals($contact->l_name, $document['data']['attributes']['l_name']);
-        $this->assertEquals($contact->email, $document['data']['attributes']['email']);
-        $this->assertEquals($contact->title, $document['data']['attributes']['title']);
-        $this->assertEquals($contact->phone, $document['data']['attributes']['phone']);
-        $this->assertEquals($contact->phone_cell, $document['data']['attributes']['phone_cell']);
-        $this->assertEquals($contact->phone_office, $document['data']['attributes']['phone_office']);
-        $this->assertEquals($contact->address, $document['data']['attributes']['address']);
-        $this->assertEquals($contact->city, $document['data']['attributes']['city']);
-        $this->assertEquals($contact->state, $document['data']['attributes']['state']);
-        $this->assertEquals($contact->zip, $document['data']['attributes']['zip']);
-        $this->assertEquals($contact->birthday, $document['data']['attributes']['birthday']);
+        $attributes = $document['data']['attributes'];
+
+        // Check attributes
+        $this->assertArraySubset($attributes, $contact->getAttributes());
 
         // Check relationships
-        $this->assertEquals(2, count($document['data']['relationships']));
-        $this->assertArrayHasKey('owner', $document['data']['relationships']);
-        $this->assertArrayHasKey('assignee', $document['data']['relationships']);
-        $this->assertArrayHasKey('data', $document['data']['relationships']['assignee']);
-        $this->assertArrayHasKey('links', $document['data']['relationships']['assignee']);
-        $this->assertArrayHasKey('links', $document['data']['relationships']['owner']);
-        $this->assertEquals(2, count($document['data']['relationships']['owner']['links']));
-        $this->assertArrayHasKey('self', $document['data']['relationships']['owner']['links']);
-        $this->assertArrayHasKey('related', $document['data']['relationships']['owner']['links']);
+        $this->assertArrayHasKey('relationships', $document['data']);
+        $relationships = $document['data']['relationships'];
+        $this->assertEquals(2, count($relationships));
+        $this->assertArrayHasKey('owner', $relationships);
+        $this->assertArrayHasKey('assignee', $relationships);
+        $this->assertArrayHasKey('data', $relationships['assignee']);
+        $this->assertArrayHasKey('links', $relationships['assignee']);
+        $this->assertArrayHasKey('links', $relationships['owner']);
+        $this->assertEquals(2, count($relationships['owner']['links']));
+        $this->assertArrayHasKey('self', $relationships['owner']['links']);
+        $this->assertArrayHasKey('related', $relationships['owner']['links']);
     }
 
     public function testGetContactRelationshipSuccess()
     {
         $this->client->get('/contacts/1/relationships/assignee');
-        $this->assertEquals(200, $this->client->response->getStatusCode());
-    }
-
-    public function testGetContactRelationshipWithIncludeSuccess()
-    {
-        $this->client->get('/contacts/1/relationships/assignee?include=owned-contacts');
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
@@ -167,14 +149,10 @@ class AppTest extends BaseTestCase
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 
-    public function testGetHasManyRelationshipWithIncludedSuccess()
-    {
-        $this->client->get('/users/1/relationships/owned-contacts?include=owned-contacts,owned-contacts.assignee');
-        $this->assertEquals(200, $this->client->response->getStatusCode());
-    }
-
     public function testCreateContactsSuccess()
     {
+        $user = Factory::create(User::class);
+
         $this->client->post('/contacts', [
             'data' => [
                 'type' => 'contact',
@@ -196,7 +174,7 @@ class AppTest extends BaseTestCase
                     'assignee' => [
                         'data' => [
                             'type' => 'user',
-                            'id' => '1'
+                            'id' => $user->id
                         ]
                     ]
                 ]
@@ -219,14 +197,19 @@ class AppTest extends BaseTestCase
         $this->assertEquals('MN', $contact->state);
         $this->assertEquals('33212', $contact->zip);
         $this->assertEquals('1990-07-01', $contact->birthday);
+
+        $this->assertEquals($user->id, $contact->assignee->id);
     }
 
     public function testUpdateContactsSuccess()
     {
-        $this->client->patch('/contacts/1', [
+        $contact = Factory::create(Contact::class);
+        $user = Factory::create(User::class);
+
+        $this->client->patch('/contacts/'.$contact->id, [
             'data' => [
                 'type' => 'contact',
-                'id' => '1',
+                'id' => $contact->id,
                 'attributes' => [
                     'f_name' => 'John',
                     'l_name' => 'Doe',
@@ -245,7 +228,7 @@ class AppTest extends BaseTestCase
                     'assignee' => [
                         'data' => [
                             'type' => 'user',
-                            'id' => '1'
+                            'id' => $user->id
                         ]
                     ]
                 ]
@@ -254,7 +237,7 @@ class AppTest extends BaseTestCase
 
         $this->assertEquals(202, $this->client->response->getStatusCode());
 
-        $contact = Contact::find(1);
+        $contact = Contact::find($contact->id);
 
         $this->assertEquals('John', $contact->f_name);
         $this->assertEquals('Doe', $contact->l_name);
@@ -268,7 +251,7 @@ class AppTest extends BaseTestCase
         $this->assertEquals('MN', $contact->state);
         $this->assertEquals('33212', $contact->zip);
         $this->assertEquals('1990-07-01', $contact->birthday);
-        $this->assertEquals(1, $contact->assignee->id);
+        $this->assertEquals($user->id, $contact->assignee->id);
     }
 
     public function testHydrateToManyRelationshipForCreate()
@@ -331,27 +314,32 @@ class AppTest extends BaseTestCase
 
     public function testUpdateRelationshipSuccess()
     {
-        $this->client->patch('/contacts/1/relationships/assignee', [
+        $contact = Factory::create(Contact::class);
+        $user = Factory::create(User::class);
+
+        $this->client->patch('/contacts/'.$contact->id.'/relationships/assignee', [
             'data' => [
                 'type' => 'user',
-                'id' => '2'
+                'id' => $user->id
             ]
         ]);
 
         $this->assertEquals(202, $this->client->response->getStatusCode());
 
-        $contact = Contact::find(1);
+        $contact = Contact::find($contact->id);
 
-        $this->assertEquals(2, $contact->assignee->id);
+        $this->assertEquals($user->id, $contact->assignee->id);
     }
 
     public function testDeleteContactSuccess()
     {
-        $this->client->delete('/contacts/30');
+        $contact = Factory::create(Contact::class);
+
+        $this->client->delete('/contacts/'.$contact->id);
         $this->assertEquals(204, $this->client->response->getStatusCode());
 
         $this->expectException(ModelNotFoundException::class);
-        Contact::findOrFail(30);
+        Contact::findOrFail($contact->id);
     }
 
     public function testMissingTypeError()
@@ -366,13 +354,13 @@ class AppTest extends BaseTestCase
 
     public function testErrorResponse()
     {
-        $this->expectException(ResourceNotExists::class);
-        $this->client->get('/contacts/5948');
+        $this->expectException(ResourceNotFound::class);
+        $this->client->get('/contacts/594865876');
     }
 
     public function testUpdateInvalidRelationshipError()
     {
-        $this->expectException(RelationshipNotExists::class);
+        $this->expectException(Forbidden::class);
         $this->client->patch('/contacts/1/relationships/some-relationship', [
             'data' => [
                 'type' => 'user',

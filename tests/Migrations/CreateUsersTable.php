@@ -29,32 +29,9 @@ class CreateUsersTable extends Migration
             $table->string('state', 50)->nullable();
             $table->string('zip', 15)->nullable();
             $table->integer('timezone')->nullable();
+            $table->integer('active_id', false, true)->nullable();
             $table->timestamps();
         });
-
-        $faker = Factory::create();
-
-        for ($i = 0; $i < 5; $i++) {
-            $user = new User();
-            $user->setRawAttributes([
-                'f_name' => $faker->firstName,
-                'l_name' => $faker->lastName,
-                'email' => $faker->email,
-                'password' => $faker->password,
-                'phone' => $faker->phoneNumber,
-                'phone_cell' => $faker->phoneNumber,
-                'phone_office' => $faker->phoneNumber,
-                'address' => $faker->address,
-                'city' => $faker->city,
-                'state' => $faker->stateAbbr,
-                'zip' => $faker->postcode,
-                'timezone' => 5,
-                'created_at' => $faker->dateTimeBetween('-3 years', 'now'),
-                'updated_at' => $faker->dateTimeBetween('-3 years', 'now')
-            ]);
-
-            $user->save();
-        }
     }
 
     /**

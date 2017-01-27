@@ -41,8 +41,7 @@ class InvocationStrategy implements InvocationStrategyInterface
         array $routeArguments
     ) {
         $request = new Request($request, $this->exceptionFactory);
-        $jsonApi = new JsonApi($request, $response, $this->exceptionFactory, new DefaultSerializer());
 
-        return call_user_func($callable, $jsonApi, $routeArguments);
+        return call_user_func($callable, $request, $response, $routeArguments);
     }
 }

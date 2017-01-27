@@ -21,7 +21,7 @@ use WoohooLabs\Yin\JsonApi\Schema\ResourceIdentifier;
 
 class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInterface
 {
-    use RelationshipHelperTrait;
+    //use RelationshipHelperTrait;
     use TypeTrait;
 
     /**

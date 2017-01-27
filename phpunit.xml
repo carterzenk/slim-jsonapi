@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="./vendor/autoload.php"
+<phpunit bootstrap="./tests/bootstrap.php"
 		 backupGlobals="false"
 		 backupStaticAttributes="false"
 		 colors="true"
@@ -11,9 +11,6 @@
 		 stopOnFailure="false"
 		 syntaxCheck="true">
 	<testsuites>
-		<testsuite name="App">
-			<directory>./tests/App</directory>
-		</testsuite>
 		<testsuite name="Controller">
 			<directory>./tests/Controller</directory>
 		</testsuite>
@@ -31,6 +28,9 @@
 		</testsuite>
 		<testsuite name="Hydrator">
 			<directory>./tests/Hydrator</directory>
+		</testsuite>
+		<testsuite name="Integration">
+			<directory>./tests/Integration</directory>
 		</testsuite>
 		<testsuite name="Model">
 			<directory>./tests/Model</directory>

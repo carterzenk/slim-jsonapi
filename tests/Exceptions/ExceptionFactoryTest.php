@@ -39,9 +39,7 @@ class ExceptionFactoryTest extends BaseTestCase
     public function testResourceNotFound()
     {
         $factory = new ExceptionFactory();
-        $request = Request::createFromEnvironment($this->app->getContainer()->get('environment'));
-        $request = new \WoohooLabs\Yin\JsonApi\Request\Request($request, $factory);
-        $resourceNotFound = $factory->createResourceNotFoundException($request);
+        $resourceNotFound = $factory->createResourceNotFoundException($this->getMockRequest());
         $this->assertInstanceOf(ResourceNotFound::class, $resourceNotFound);
     }
 

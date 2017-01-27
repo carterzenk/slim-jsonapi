@@ -3,35 +3,26 @@
 namespace CarterZenk\Tests\JsonApi\Transformer;
 
 use CarterZenk\JsonApi\Transformer\Builder;
-use CarterZenk\JsonApi\Transformer\Container;
-use CarterZenk\JsonApi\Transformer\LinksFactory;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
-use CarterZenk\Tests\JsonApi\Model\Comment;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 use CarterZenk\Tests\JsonApi\Model\OrganizationUser;
-use CarterZenk\Tests\JsonApi\Model\User;
-use Slim\Http\Uri;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Laracasts\TestDummy\Factory;
 
 class BuilderTest extends BaseTestCase
 {
     private function getBuilder($modelClass)
     {
-        $uri = new Uri('http', 'localhost', 8000);
-        $linksFactory = new LinksFactory($uri);
-        $container = new Container($linksFactory);
-        $model = $modelClass::find(1);
+        $model = Factory::build($modelClass);
 
-        return new Builder($model, $linksFactory);
+        return new Builder($model);
     }
 
     private function getBuilderForNew($modelClass)
     {
-        $uri = new Uri('http', 'localhost', 8000);
-        $linksFactory = new LinksFactory($uri);
-        $container = new Container($linksFactory);
         $model = new $modelClass();
 
-        return new Builder($model, $linksFactory);
+        return new Builder($model);
     }
 
     public function testGetType()
@@ -46,64 +37,34 @@ class BuilderTest extends BaseTestCase
         $this->assertEquals('contact', $builder->getType());
     }
 
-    public function testGetIdKey()
+    public function testGetPluralType()
     {
         $builder = $this->getBuilder(Contact::class);
-        $this->assertEquals('id', $builder->getIdKey());
+        $this->assertEquals('contacts', $builder->getPluralType());
 
-        $builder = $this->getBuilderForNew(Contact::class);
-        $this->assertEquals('id', $builder->getIdKey());
-    }
-
-    public function testGetDefaultIncludedRelationships()
-    {
-        $builder = $this->getBuilder(Contact::class);
-        $this->assertEquals(['assignee'], $builder->getDefaultIncludedRelationships());
-
-        $builder = $this->getBuilder(User::class);
-        $this->assertEquals([], $builder->getDefaultIncludedRelationships());
-
-        $builder = $this->getBuilderForNew(Contact::class);
-        $this->assertEquals(['assignee'], $builder->getDefaultIncludedRelationships());
+        $builder = $this->getBuilder(OrganizationUser::class);
+        $this->assertEquals('organization-users', $builder->getPluralType());
     }
 
     public function testGetAttributesTransformer()
     {
-        $expectedKeys = ['owner_id', 'assigned_id', 'id'];
+        $expectedKeys = ['owner_id', 'assigned_id'];
 
         $builder = $this->getBuilder(Contact::class);
-        $this->assertEquals($expectedKeys, $builder->getAttributesToHide());
+        $this->assertEquals($expectedKeys, $builder->getForeignKeys());
 
         $builder = $this->getBuilderForNew(Contact::class);
-        $this->assertEquals($expectedKeys, $builder->getAttributesToHide());
+        $this->assertEquals($expectedKeys, $builder->getForeignKeys());
     }
 
     public function testGetRelationshipsTransformer()
     {
-        $expectedKeys = ['owner', 'assignee'];
-        $uri = new Uri('http', 'localhost', 8000);
-        $linksFactory = new LinksFactory($uri);
-        $container = new Container($linksFactory);
+        $builder = $this->getBuilder(Contact::class);
+        $relations = $builder->getRelations();
 
-        $model = Contact::find(1);
-        $builder = new Builder($model, $linksFactory);
-        $relationshipsTransformer = $builder->getRelationshipsTransformer($container);
-        $this->checkTransformer($expectedKeys, $relationshipsTransformer);
-
-        $model = new Contact();
-        $builder = new Builder($model, $linksFactory);
-
-        $relationshipsTransformer = $builder->getRelationshipsTransformer($container);
-        $this->checkTransformer($expectedKeys, $relationshipsTransformer);
-    }
-
-    private function checkTransformer(array $expectedKeys, array $actual)
-    {
-        $this->assertEquals(count($expectedKeys), count($actual));
-
-        foreach ($expectedKeys as $expectedKey) {
-            $this->assertArrayHasKey($expectedKey, $actual);
-            $this->assertInstanceOf(\Closure::class, $actual[$expectedKey]);
+        $this->assertEquals(['owner', 'assignee', 'activeUser'], array_keys($relations));
+        foreach ($relations as $name => $relation) {
+            $this->assertInstanceOf(Relation::class, $relation);
         }
     }
 }

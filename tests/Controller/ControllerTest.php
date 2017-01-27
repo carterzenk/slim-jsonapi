@@ -2,21 +2,26 @@
 
 namespace CarterZenk\Tests\JsonApi\Controller;
 
-use CarterZenk\JsonApi\Controller\JsonApiController;
-use CarterZenk\JsonApi\Exceptions\InvalidDomainObjectException;
-use CarterZenk\JsonApi\Serializer\Serializer;
+use CarterZenk\JsonApi\Controller\AbstractJsonApiController;
+use CarterZenk\JsonApi\Controller\JsonApiControllerInterface;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
-use Psr\Http\Message\ResponseInterface;
-use WoohooLabs\Yin\JsonApi\Exception\DefaultExceptionFactory;
-use WoohooLabs\Yin\JsonApi\JsonApi;
-use WoohooLabs\Yin\JsonApi\Request\Request;
 
 class ControllerTest extends BaseTestCase
 {
-    public function testClassesExist()
+    public function testClassExist()
     {
-        $this->assertEquals(true, class_exists(JsonApi::class));
-        $this->assertEquals(true, class_exists(JsonApiController::class));
-        $this->assertEquals(true, class_exists(ContactsController::class));
+        $this->assertTrue(class_exists(AbstractJsonApiController::class));
     }
+
+    public function testItImplementsInterface()
+    {
+        $this->assertNotFalse(
+            array_search(JsonApiControllerInterface::class,
+                class_implements(AbstractJsonApiController::class),
+                true
+            )
+        );
+    }
+
+
 }
