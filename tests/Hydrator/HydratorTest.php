@@ -114,19 +114,34 @@ class HydratorTest extends BaseTestCase
         $this->assertEquals('1990-07-01', $contact->birthday);
     }
 
-    public function testHydrateNotFillableAttributeThrowsException()
+    public function testHydrateNotFillableAttributeSkips()
     {
         $data = [
             'data' => [
                 'type' => 'contact',
                 'attributes' => [
-                    'owner_id' => '2'
+                    'non-fillable-attribute' => '2'
                 ]
             ]
         ];
 
         $request = $this->getRequest($data, 'POST');
+        $contact = $this->hydrate(new Contact(), $request);
+        $this->assertInstanceOf(Contact::class, $contact);
+    }
 
+    public function testHydrateRelationshipAsAttributeThrowsException()
+    {
+        $data = [
+            'data' => [
+                'type' => 'contact',
+                'attributes' => [
+                    'assignee' => '2'
+                ]
+            ]
+        ];
+
+        $request = $this->getRequest($data, 'POST');
         $this->expectException(AttributeUpdateNotAllowed::class);
         $this->hydrate(new Contact(), $request);
     }
