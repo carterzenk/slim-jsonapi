@@ -4,11 +4,11 @@ namespace CarterZenk\JsonApi\Handlers;
 
 use CarterZenk\JsonApi\Exceptions\MethodNotAllowed;
 use Psr\Http\Message\ResponseInterface;
-use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class NotAllowedHandler extends AbstractErrorHandler
 {
-    public function __invoke(RequestInterface $request, ResponseInterface $response, array $availableMethods)
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, array $availableMethods)
     {
         $exception = new MethodNotAllowed($availableMethods);
         $errorDocument = $exception->getErrorDocument();
