@@ -315,6 +315,7 @@ trait JsonApiTrait
     {
         try {
             $model->saveOrFail();
+            $this->log->info('Model Saved', $model->toArray());
             return $model->fresh();
         } catch (\Exception $e) {
             if ($e instanceof QueryException && $this->log instanceof Logger) {
