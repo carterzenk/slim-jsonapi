@@ -6,13 +6,14 @@ use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use CarterZenk\JsonApi\Model\Paginator;
 use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
-use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
+use Monolog\Logger;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 trait JsonApiTrait
@@ -316,6 +317,17 @@ trait JsonApiTrait
             $model->saveOrFail();
             return $model->fresh();
         } catch (\Exception $e) {
+            if ($e instanceof QueryException && $this->log instanceof Logger) {
+                $context['model'] = $model->toArray();
+                $context['exception_bindings'] = $e->getBindings();
+                $context['exception_info'] = $e->errorInfo;
+                $context['exception_code'] = $e->getCode();
+                $context['exception_file'] = $e->getFile();
+                $context['exception_line'] = $e->getLine();
+                $context['exception_message'] = $e->getMessage();
+                $context['exception_trace'] = $e->getTraceAsString();
+                $this->log->alert('Failed to save model.', $context);
+            }
             throw $this->exceptionFactory->createBadRequestException();
         }
     }

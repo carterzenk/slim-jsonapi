@@ -6,6 +6,10 @@ use CarterZenk\JsonApi\Encoder\EncoderInterface;
 use CarterZenk\JsonApi\Exceptions\ExceptionFactoryInterface;
 use CarterZenk\JsonApi\Hydrator\HydratorInterface;
 use CarterZenk\JsonApi\Strategy\Filtering\FilteringStrategyInterface;
+use Monolog\Formatter\LogstashFormatter;
+use Monolog\Handler\NativeMailerHandler;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
@@ -36,6 +40,12 @@ abstract class JsonApiController
     protected $encoder;
 
     /**
+     * @var Logger
+     */
+    protected $log;
+
+    /**
+     * JsonApiController constructor.
      * @param EncoderInterface $encoder
      * @param ExceptionFactoryInterface $exceptionFactory
      * @param HydratorInterface $hydrator
@@ -51,6 +61,23 @@ abstract class JsonApiController
         $this->exceptionFactory = $exceptionFactory;
         $this->hydrator = $hydrator;
         $this->filteringStrategy = $filteringStrategy;
+
+        // Logger
+        $this->log = new Logger('slim-jsonapi');
+
+        // Handlers
+        $mail = new NativeMailerHandler(
+            'ethan@totalexpertinc.com',
+            'JsonApiController Error',
+            'ethan@totalexpertinc.com'
+        );
+        $this->log->pushHandler($mail);
+
+        if ($handle = fopen(getenv('LOG_PATH').'/logstash-app.log', 'ab')) {
+            $stream = new StreamHandler($handle);
+            $stream->setFormatter(new LogstashFormatter('api'));
+            $this->log->pushHandler($stream);
+        }
     }
 
     /**
