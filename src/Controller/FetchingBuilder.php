@@ -90,9 +90,10 @@ class FetchingBuilder implements FetchingBuilderInterface
     /**
      * @param Builder $builder
      * @param PageBasedPagination $pagination
+     * @param array $columns
      * @return Paginator
      */
-    public function paginate(Builder $builder, PageBasedPagination $pagination)
+    public function paginate(Builder $builder, PageBasedPagination $pagination, array $columns = ['*'])
     {
         $page = $pagination->getPage();
         $perPage = $pagination->getSize();
@@ -101,7 +102,7 @@ class FetchingBuilder implements FetchingBuilderInterface
 
         $total = $builder->toBase()->getCountForPagination();
 
-        $results = $total ? $builder->forPage($page, $perPage)->get() : new Collection;
+        $results = $total ? $builder->forPage($page, $perPage)->get($columns) : new Collection;
 
         return new Paginator($results, $total, $perPage, $page);
     }

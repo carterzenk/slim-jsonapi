@@ -133,7 +133,8 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
 
         $results = $this->fetchingBuilder->paginate(
             $builder,
-            $request->getPageBasedPagination(1, 20)
+            $request->getPageBasedPagination(1, 20),
+            $this->builderColumns
         );
 
         $response = $this->encode($request, $response, $results);

@@ -19,7 +19,8 @@ interface FetchingBuilderInterface
     /**
      * @param Builder $builder
      * @param PageBasedPagination $pagination
+     * @param array $columns
      * @return Paginator
      */
-    public function paginate(Builder $builder, PageBasedPagination $pagination);
+    public function paginate(Builder $builder, PageBasedPagination $pagination, array $columns);
 }
