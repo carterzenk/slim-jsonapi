@@ -143,7 +143,18 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
         }
 
         foreach ($attributes as $attributeKey => $attributeValue) {
-            if (method_exists($domainObject, $attributeKey) || ($domainObject->isFillable($attributeKey) === false)) {
+            // Throw exception if the client is trying to set a relationship as an attribute.
+            if (method_exists($domainObject, $attributeKey)) {
+                throw new AttributeUpdateNotAllowed($attributeKey);
+            }
+
+            // Skip over null attributes.
+            if (is_null($attributeValue)) {
+                continue;
+            }
+
+            // Throw exception if the client is trying to set an attribute which is not fillable.
+            if ($domainObject->isFillable($attributeKey) === false) {
                 throw new AttributeUpdateNotAllowed($attributeKey);
             }
 
