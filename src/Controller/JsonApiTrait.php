@@ -328,7 +328,18 @@ trait JsonApiTrait
                 $context['exception_message'] = $e->getMessage();
                 $context['exception_trace'] = $e->getTraceAsString();
                 $this->log->alert('Failed to save model.', $context);
+            } else {
+                if ($this->log instanceof Logger) {
+                    $context['model'] = $model->toArray();
+                    $context['exception_code'] = $e->getCode();
+                    $context['exception_file'] = $e->getFile();
+                    $context['exception_line'] = $e->getLine();
+                    $context['exception_message'] = $e->getMessage();
+                    $context['exception_trace'] = $e->getTraceAsString();
+                    $this->log->alert('Failed to save model.', $context);
+                }
             }
+
             throw $this->exceptionFactory->createBadRequestException();
         }
     }

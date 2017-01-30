@@ -66,13 +66,6 @@ abstract class JsonApiController
         $this->log = new Logger('slim-jsonapi');
 
         // Handlers
-        $mail = new NativeMailerHandler(
-            'ethan@totalexpertinc.com',
-            'JsonApiController Error',
-            'ethan@totalexpertinc.com'
-        );
-        $this->log->pushHandler($mail);
-
         if ($handle = fopen(getenv('LOG_PATH').'/logstash-app.log', 'ab')) {
             $stream = new StreamHandler($handle);
             $stream->setFormatter(new LogstashFormatter('api'));
