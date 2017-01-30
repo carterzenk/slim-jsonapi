@@ -177,7 +177,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     public function findRelatedResourceAction(RequestInterface $request, ResponseInterface $response, array $args)
     {
         $id = $args['id'];
-        $relationship = $args['relationship'];
+        $relationship = $args['related'];
 
         $relationMethodName = StringHelper::camelCase($relationship);
 
