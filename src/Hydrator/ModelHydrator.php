@@ -6,7 +6,6 @@ use CarterZenk\JsonApi\Exceptions\AttributeUpdateNotAllowed;
 use CarterZenk\JsonApi\Exceptions\RelationshipUpdateNotAllowed;
 use CarterZenk\JsonApi\Hydrator\Relationship\Factory\RelationshipHydratorFactory;
 use CarterZenk\JsonApi\Hydrator\Relationship\Factory\RelationshipHydratorFactoryInterface;
-use CarterZenk\JsonApi\Model\RelationshipHelperTrait;
 use CarterZenk\JsonApi\Model\StringHelper;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
 use CarterZenk\JsonApi\Model\Model;
@@ -21,7 +20,6 @@ use WoohooLabs\Yin\JsonApi\Schema\ResourceIdentifier;
 
 class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInterface
 {
-    //use RelationshipHelperTrait;
     use TypeTrait;
 
     /**
