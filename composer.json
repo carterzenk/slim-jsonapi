@@ -40,7 +40,6 @@
     "illuminate/filesystem": "5.3",
     "laracasts/testdummy": "^2.3"
   },
-  "minimum-stability": "stable",
   "autoload": {
     "psr-4": {
       "CarterZenk\\JsonApi\\": "src/"
