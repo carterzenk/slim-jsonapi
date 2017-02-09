@@ -10,9 +10,11 @@ use CarterZenk\JsonApi\Transformer\Transformer;
 use CarterZenk\JsonApi\Model\Model;
 use CarterZenk\JsonApi\Transformer\TypeTrait;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
 use Illuminate\Support\Str;
+use WoohooLabs\Yin\JsonApi\Request\Pagination\PageBasedPagination;
 use WoohooLabs\Yin\JsonApi\Request\RequestInterface;
 
 trait JsonApiTrait
@@ -83,19 +85,37 @@ trait JsonApiTrait
             $builder = $this->getBuilder();
             $builder = $this->applyQueryParams($builder, $request);
 
-            $items = $builder->get($this->builderColumns);
-
-            $pagination = $request->getPageBasedPagination(1, 20);
-            $pageSize = $pagination->getSize();
-            $pageNumber = $pagination->getPage();
-
-            return new Paginator(
-                $items->forPage($pageNumber, $pageSize),
-                $items->count(),
-                $pageSize,
-                $pageNumber
+            $results = $this->paginate(
+                $builder,
+                $request->getPageBasedPagination(1, 20),
+                $this->builderColumns
             );
+
+            return $results;
         };
+    }
+
+    /**
+     * @param Builder $builder
+     * @param PageBasedPagination $pagination
+     * @param array $columns
+     * @return Paginator
+     */
+    protected function paginate(
+        Builder $builder,
+        PageBasedPagination $pagination,
+        array $columns = ['*']
+    ) {
+        $page = $pagination->getPage();
+        $perPage = $pagination->getSize();
+
+        $builder->toBase();
+
+        $total = $builder->toBase()->getCountForPagination();
+
+        $results = $total ? $builder->forPage($page, $perPage)->get($columns) : new Collection;
+
+        return new Paginator($results, $total, $perPage, $page);
     }
 
     /**
