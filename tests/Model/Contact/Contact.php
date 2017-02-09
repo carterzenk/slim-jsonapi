@@ -2,17 +2,28 @@
 
 namespace CarterZenk\Tests\JsonApi\Model;
 
+use Analogue\ORM\Entity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Contact extends BaseModel
+class Contact extends Entity
 {
-    use SoftDeletes;
+    public function __construct(
+        $f_name,
+        $l_name,
+        $email,
+        $title,
+        $phone,
+        $phone_cell,
+        $phone_office,
+        $address,
+        $city,
+        $state,
+        $zip,
+        $birthday
+    ){
 
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
-    protected $table = 'leads';
+    }
 
     protected $guarded = [
         'id',
@@ -41,10 +52,6 @@ class Contact extends BaseModel
         'deleted_at'
     ];
 
-    protected $with = [
-        'assignee'
-    ];
-
     protected $visibleRelationships = [
         'owner',
         'assignee',
@@ -56,20 +63,7 @@ class Contact extends BaseModel
         'activeUser'
     ];
 
-    public function owner()
-    {
-        return $this->belongsTo(User::class, 'owner_id', 'id');
-    }
 
-    public function assignee()
-    {
-        return $this->belongsTo(User::class, 'assigned_id', 'id');
-    }
-
-    public function activeUser()
-    {
-        return $this->hasOne(User::class, 'active_id', 'id');
-    }
 
     public function setFirstNameAttribute($firstName)
     {
@@ -79,15 +73,5 @@ class Contact extends BaseModel
     public function scopeZip(Builder $query)
     {
         return $query->where('zip', '11111');
-    }
-
-    public function someOtherMethod($something)
-    {
-        return $something;
-    }
-
-    protected function someOtherProtectedMethod()
-    {
-        return null;
     }
 }
