@@ -2,7 +2,6 @@
 
 namespace CarterZenk\Tests\JsonApi\Integration;
 
-use CarterZenk\JsonApi\App\App;
 use CarterZenk\JsonApi\Exceptions\Forbidden;
 use CarterZenk\JsonApi\Exceptions\ResourceNotFound;
 use CarterZenk\JsonApi\Serializer\JsonApiSerializer;
@@ -160,7 +159,7 @@ class IntegrationTest extends WebTestCase
 
     public function testGetHasManyRelationshipSuccess()
     {
-        $this->client->get('/users/1/relationships/owned-contacts');
+        $this->client->get('/users/1/relationships/owned-contacts?include=active-user');
         $this->assertEquals(200, $this->client->response->getStatusCode());
     }
 

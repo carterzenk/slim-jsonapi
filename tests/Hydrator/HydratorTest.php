@@ -274,13 +274,13 @@ class HydratorTest extends BaseTestCase
 
         $data = [
             'data' => [
-                'type' => 'user',
-                'id' => $user->id,
+                'type' => 'contact',
+                'id' => $contact->id,
                 'relationships' => [
-                    'active-contact' => [
+                    'active-user' => [
                         'data' => [
-                            'type' => 'contact',
-                            'id' => $contact->id
+                            'type' => 'user',
+                            'id' => $user->id
                         ]
                     ]
                 ]
@@ -288,9 +288,9 @@ class HydratorTest extends BaseTestCase
         ];
 
         $request = $this->getRequest($data, 'PATCH');
-        $user = $this->hydrate($user, $request);
-        $this->assertNotNull($user->activeContact);
-        $this->assertEquals($contact->id, $user->activeContact->id);
+        $contact = $this->hydrate($contact, $request);
+        $this->assertNotNull($contact->activeUser);
+        $this->assertEquals($user->id, $contact->activeUser->id);
     }
 
     public function testHydrateHasOneRelationshipForDeleteThrowsException()

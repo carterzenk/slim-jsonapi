@@ -11,6 +11,7 @@ use CarterZenk\JsonApi\Exceptions\ResourceNotExists;
 use CarterZenk\JsonApi\Exceptions\ResourceNotFound;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use Slim\Http\Request;
+use WoohooLabs\Yin\JsonApi\Document\AbstractDocument;
 use WoohooLabs\Yin\JsonApi\Schema\ErrorSource;
 
 class ExceptionFactoryTest extends BaseTestCase
@@ -27,6 +28,7 @@ class ExceptionFactoryTest extends BaseTestCase
         $factory = new ExceptionFactory();
         $invalidDomainObject = $factory->createInvalidDomainObjectException([]);
         $this->assertInstanceOf(InvalidDomainObjectException::class, $invalidDomainObject);
+        $this->assertInstanceOf(AbstractDocument::class, $invalidDomainObject->getErrorDocument());
     }
 
     public function testMethodNotAllowed()

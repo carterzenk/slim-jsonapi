@@ -6,6 +6,7 @@ use CarterZenk\JsonApi\Document\DocumentFactory;
 use CarterZenk\Tests\JsonApi\BaseTestCase;
 use CarterZenk\Tests\JsonApi\Model\Contact;
 use Illuminate\Database\Eloquent\Model;
+use Laracasts\TestDummy\Factory;
 use PHPUnit\Framework\TestCase;
 use Slim\Http\Environment;
 use Slim\Http\Request;
@@ -57,5 +58,27 @@ class DocumentTest extends TestCase
 
         $this->assertEquals('/leads', $links->getSelf()->getHref());
         $this->assertEquals('http://localhost:8080', $links->getBaseUri());
+    }
+
+    public function testItGetsId()
+    {
+        $document = $this->getDocument('1.0', Contact::class);
+        $contact = Factory::create(Contact::class);
+        $exceptionFactory = new DefaultExceptionFactory();
+
+        $document->getResourceContent($exceptionFactory, $contact);
+        $this->assertEquals($contact->id, $document->getResourceId());
+    }
+
+    public function testItGetsMeta()
+    {
+        $document = $this->getDocument('1.0', Contact::class);
+        $contact = Factory::create(Contact::class);
+        $exceptionFactory = new DefaultExceptionFactory();
+
+        $meta = ['example' => 'meta'];
+
+        $document->getResourceContent($exceptionFactory, $contact, $meta);
+        $this->assertEquals($meta, $document->getMetaContent($contact, $meta)['meta']);
     }
 }
