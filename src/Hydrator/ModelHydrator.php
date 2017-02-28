@@ -200,15 +200,42 @@ class ModelHydrator implements HydratorInterface, UpdateRelationshipHydratorInte
 
         $this->validateRelationship($relationshipName, $relationMethodName, $domainObject);
 
+        $relation = $domainObject->$relationMethodName();
         $relationshipHydrator = $this->relationshipHydratorFactory->createRelationshipHydrator(
-            $domainObject->$relationMethodName(),
+            $relation,
             $relationshipName
         );
 
         $relationship = $this->createRelationship($relationshipData);
-
         if (is_null($relationship)) {
             throw $this->exceptionFactory->createDataMemberMissingException($request);
+        }
+        
+        // Determine the types of resources we want to allow in this relationship.
+        $relatedClass = $relation->getRelated(); // i.e. Contact
+        $relatedInstance = new $relatedClass();
+        $relatedValidTypes = $relatedInstance->getValidTypes(); // i.e. [Contact, Borrower], or []
+        if(null == $relatedValidTypes) {
+            $relatedValidTypes = [];
+        }
+
+        $resources = null;
+        if($relationship instanceof ToOneRelationship) {
+            $resources = [$relationship->getResourceIdentifier()];
+        } elseif($relationship instanceof ToManyRelationship) {
+            $resources = $relationship->getResourceIdentifiers();
+        }
+        
+        $relatedType = $this->getModelType($relatedClass);
+
+		if (!in_array($relatedType, $relatedValidTypes)) {
+			$relatedValidTypes[] = $relatedType;
+		}
+
+        foreach($resources as $idx => $resource) {
+            if(!in_array($resource->getType(), $relatedValidTypes)) {                            
+                throw $this->exceptionFactory->createResourceTypeUnacceptableException($resource->getType(), $relatedValidTypes);
+            }
         }
 
         $relationshipHydrator->hydrate($request, $this->exceptionFactory, $relationship);

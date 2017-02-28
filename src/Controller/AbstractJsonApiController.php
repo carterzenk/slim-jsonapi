@@ -301,7 +301,7 @@ abstract class AbstractJsonApiController implements JsonApiControllerInterface
     protected function findResource($id)
     {
         try {
-            return $this->getBuilder()->findOrFail($id);
+            return $this->getBuilder()->findOrFail($id, $this->builderColumns);
         } catch (ModelNotFoundException $exception) {
             throw new ResourceNotFound();
         }

@@ -4,6 +4,8 @@ namespace CarterZenk\JsonApi\Model;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 
+use CarterZenk\JsonApi\Model\StringHelper;
+
 class Model extends Eloquent
 {
     /**
@@ -57,6 +59,17 @@ class Model extends Eloquent
         return in_array($name, $this->fillableRelationships);
     }
 
+    /**
+     * Returns an array of valid types for the given relationship.
+     * For example, a Contact model could return ['contact', 'borrower'].
+     * 
+     * @param type $relationshipName
+     * @return array
+     */
+    public function getValidTypes() {
+        return [];
+    }
+    
     /**
      * @inheritdoc
      */
