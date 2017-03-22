@@ -10,10 +10,10 @@ trait TypeTrait
     /**
      * Returns the type of a model.
      *
-     * @param Model $model
+     * @param Model|string $model
      * @return null|string
      */
-    public function getModelType(Model $model)
+    public function getModelType($model)
     {
         $reflection = new \ReflectionClass($model);
         return StringHelper::slugCase($reflection->getShortName());
